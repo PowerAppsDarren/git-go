@@ -2,6 +2,13 @@
 #
 # Interactive Git Repository Setup Script
 # Handles both forking existing repos and creating new ones
+
+    # Make the script executable
+    #chmod +x git-go.sh
+
+    # Now run it
+    #./git-go.sh
+
 #
 # ===================================================================================
 
