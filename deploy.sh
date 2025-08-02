@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # Deploy script for git-go
-# Updates the launcher in home directory and ensures proper setup
+# Creates a launcher in ~/bin/ for easy access
 #
 
 set -e
@@ -18,12 +18,13 @@ echo
 
 # Get the script directory
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-MAIN_SCRIPT="${SCRIPT_DIR}/git-go.sh"
-HOME_LAUNCHER="${HOME}/git-go.sh"
+MAIN_SCRIPT="${SCRIPT_DIR}/bin/git-go"
+USER_BIN_DIR="${HOME}/bin"
+LAUNCHER="${USER_BIN_DIR}/git-go"
 
 # Check if main script exists
 if [ ! -f "$MAIN_SCRIPT" ]; then
-    echo -e "${RED}❌ Error: git-go.sh not found in ${SCRIPT_DIR}${NC}"
+    echo -e "${RED}❌ Error: bin/git-go not found in ${SCRIPT_DIR}${NC}"
     exit 1
 fi
 
@@ -31,35 +32,58 @@ fi
 chmod +x "$MAIN_SCRIPT"
 echo -e "${GREEN}✓ Main script is executable${NC}"
 
-# Create/update the home directory launcher
-echo -e "${YELLOW}📝 Creating launcher in home directory...${NC}"
-cat > "$HOME_LAUNCHER" << EOF
+# Create user bin directory if needed
+mkdir -p "$USER_BIN_DIR"
+
+# Create/update the launcher
+echo -e "${YELLOW}📝 Creating launcher...${NC}"
+cat > "$LAUNCHER" << EOF
 #!/bin/bash
-# Git-Go launcher - runs the actual script from the git-go repository
-exec ~/src/git-go/git-go.sh "\$@"
+# Git-Go launcher
+exec "$MAIN_SCRIPT" "\$@"
 EOF
 
 # Make launcher executable
-chmod +x "$HOME_LAUNCHER"
-echo -e "${GREEN}✓ Launcher created at ${HOME_LAUNCHER}${NC}"
+chmod +x "$LAUNCHER"
+echo -e "${GREEN}✓ Launcher created at ${LAUNCHER}${NC}"
+
+# Check if ~/bin is in PATH
+if [[ ":$PATH:" != *":$USER_BIN_DIR:"* ]]; then
+    echo
+    echo -e "${YELLOW}⚠️  ${USER_BIN_DIR} is not in your PATH${NC}"
+    echo
+    echo "Add this to your ~/.bashrc or ~/.zshrc:"
+    echo "  export PATH=\"\$HOME/bin:\$PATH\""
+else
+    echo -e "${GREEN}✓ ${USER_BIN_DIR} is in PATH${NC}"
+fi
+
+# Create initial config if needed
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/git-go"
+if [[ ! -f "$CONFIG_DIR/config" ]]; then
+    echo
+    echo -e "${YELLOW}📝 No configuration found${NC}"
+    echo
+    echo "To get started, run: ${BLUE}git-go config${NC}"
+    echo "This will create a configuration file with examples."
+    echo
+    echo "Or copy the example manually:"
+    echo "  cp $SCRIPT_DIR/config/git-go.conf.example $CONFIG_DIR/config"
+fi
 
 # Verify deployment
-if [ -x "$HOME_LAUNCHER" ]; then
+if [ -x "$LAUNCHER" ]; then
+    echo
     echo -e "${GREEN}✅ Deployment successful!${NC}"
     echo
     echo -e "${BLUE}You can now run git-go from anywhere:${NC}"
-    echo -e "  ${YELLOW}~/git-go.sh${NC}     # From home directory"
-    echo -e "  ${YELLOW}./git-go.sh${NC}     # If you're in home directory"
+    echo -e "  ${YELLOW}git-go new --name my-project${NC}"
+    echo -e "  ${YELLOW}git-go fork --url https://github.com/user/repo${NC}"
+    echo -e "  ${YELLOW}git-go config${NC}"
     echo
-    echo -e "${BLUE}The launcher will always use the latest version from:${NC}"
+    echo -e "${BLUE}The launcher will use the version from:${NC}"
     echo -e "  ${YELLOW}${MAIN_SCRIPT}${NC}"
 else
     echo -e "${RED}❌ Deployment failed!${NC}"
     exit 1
 fi
-
-# Optional: Add to PATH
-echo
-echo -e "${YELLOW}💡 Tip: To run git-go from anywhere without the path, add this to your ~/.bashrc:${NC}"
-echo -e "${BLUE}export PATH=\"\$HOME:\$PATH\"${NC}"
-echo -e "${BLUE}Then you can just type: git-go.sh${NC}"

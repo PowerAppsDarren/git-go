@@ -4,59 +4,71 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Purpose
 
-git-go is a Git repository initialization and management system that automates the setup of new repositories and forks with intelligent sync scripts, VS Code integration, and AI-assisted development support.
+Git-Go is a professional Git repository initialization and management tool that automates repository creation with intelligent sync scripts, VS Code integration, and AI-assisted development support.
+
+## Project Structure
+
+```
+git-go/
+├── bin/
+│   └── git-go           # Main executable
+├── lib/
+│   ├── colors.sh        # Color output functions
+│   └── git-utils.sh     # Git utility functions
+├── config/
+│   └── git-go.conf.example  # Configuration template
+├── tests/
+│   └── test.sh          # Test suite
+└── deploy.sh            # Local deployment script
+```
 
 ## Key Commands
 
-### Deployment and Usage
-- `./deploy.sh` - Deploy the launcher script to ~/git-go.sh for system-wide access
-- `~/git-go.sh` - Run the main script from anywhere after deployment
-- `./git-go.sh` - Run the main script directly from the repository
+### Development
+- `./deploy.sh` - Deploy git-go to ~/bin/ for local testing
+- `./tests/test.sh` - Run the test suite
+- `./bin/git-go help` - Test the main script directly
 
-### Repository Management  
-The main script creates repositories with:
-- Automated git-sync.sh and quick-sync.sh scripts in the scripts/ directory
-- VS Code tasks.json for Ctrl+Shift+B sync integration
-- claude.md file for AI-assisted development instructions
+### Usage (after deployment)
+- `git-go new --name <name>` - Create new repository
+- `git-go fork --url <url>` - Fork existing repository
+- `git-go config` - Edit configuration
+- `git-go help` - Show help
 
-## Architecture Overview
+## Architecture
 
-### Core Components
+### Main Script (bin/git-go)
+- Modular design with separate command functions
+- Configuration loaded from ~/.config/git-go/config
+- Supports both interactive and CLI argument modes
+- Generates repository-specific sync scripts
 
-1. **git-go.sh** - Main interactive script that:
-   - Handles both forking existing repos and creating new ones
-   - Sets up dual remotes (origin and alt) pointing to git.superpowerlabs.app and pool servers
-   - Creates intelligent sync scripts tailored to repository type (fork vs original)
-   - Generates claude.md files for AI assistance
-   - Configures VS Code integration
+### Generated Sync Scripts
+Each created repository gets:
+- `scripts/sync.sh` - Intelligent sync with stash handling, upstream tracking (for forks), and multi-remote push
+- `.vscode/tasks.json` - VS Code build task for Ctrl+Shift+B sync
+- `CLAUDE.md` - AI assistant instructions
 
-2. **deploy.sh** - Deployment script that:
-   - Creates a lightweight launcher at ~/git-go.sh
-   - Ensures the launcher always executes the latest version from ~/src/git-go/
+### Configuration System
+- User config at ~/.config/git-go/config
+- Supports dual git servers (primary and secondary)
+- Customizable templates and features
+- Environment variable overrides supported
 
-3. **Generated Scripts** (created in each new repository):
-   - `scripts/git-sync.sh` - Comprehensive sync with stash handling, retry logic, and upstream sync for forks
-   - `scripts/quick-sync.sh` - Quick commit with timestamp and automatic sync
-   - `.vscode/tasks.json` - VS Code build task integration
+## Testing
 
-### Key Design Decisions
+Run tests with: `./tests/test.sh`
 
-- **Dual Remote Setup**: All repos get both origin and alt remotes for redundancy
-- **Fork-Aware Sync**: Forked repos get special handling with upstream remote and merge prompts
-- **Stash Management**: Sync scripts handle uncommitted changes gracefully with interactive stashing
-- **Retry Logic**: Network operations retry up to 3 times with exponential backoff
-- **Branch Detection**: Automatically detects and uses the default branch (main/master)
+Tests cover:
+- Command functionality (help, version, new, fork)
+- File generation
+- Name validation
+- Duplicate prevention
 
-### Remote Configuration
+## Code Style
 
-- Origin: `ssh://git@git.superpowerlabs.app:2222/${USER}/${REPO}.git`
-- Alt: `ssh://git@pool:2222/${USER}/${REPO}.git`
-- Upstream (forks only): Original repository URL
-
-## Script Evolution
-
-The scripts/ directory contains earlier versions showing the evolution of features:
-- setup-git-repo.sh - Original basic version
-- enhanced-git-go.sh - Added status displays and better error handling  
-- setup-git-repo-v2.sh - Added tool checks and VS Code integration
-- git-go.sh (main) - Current version with claude.md creation and all enhancements
+- Bash 4.0+ features used
+- Functions use snake_case
+- Variables are always quoted
+- Error handling with colored output
+- Modular design with sourced libraries

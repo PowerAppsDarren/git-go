@@ -1,4 +1,30 @@
+# Test artifacts
+test-*
+tmp/
+temp/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+
+# User config (don't commit personal settings)
+config/config
+
+# Backup files
+*.bak
+*.backup
+
+# Old files
 node_modules/
 .env
-.DS_Store
-*.log

@@ -1,0 +1,33 @@
+# Git-Go Configuration File
+# Copy this to ~/.config/git-go/config and customize
+
+# Primary git server (e.g., GitHub, GitLab, Bitbucket)
+# Examples:
+#   GitHub: GIT_PRIMARY_PREFIX="git@github.com:"
+#   GitLab: GIT_PRIMARY_PREFIX="git@gitlab.com:"
+#   Self-hosted: GIT_PRIMARY_PREFIX="ssh://git@git.company.com/"
+GIT_PRIMARY_HOST="github.com"
+GIT_PRIMARY_USER="${USER}"
+GIT_PRIMARY_PREFIX="git@github.com:"
+
+# Secondary git server (optional - for backup/mirror)
+# Leave empty to disable secondary remote
+GIT_SECONDARY_HOST=""
+GIT_SECONDARY_USER=""
+GIT_SECONDARY_PREFIX=""
+
+# Default branch name for new repositories
+DEFAULT_BRANCH="main"
+
+# VS Code integration
+ENABLE_VSCODE_INTEGRATION=true
+
+# Create claude.md file for AI assistance
+ENABLE_CLAUDE_MD=true
+
+# Default .gitignore templates to include
+# Options: node, python, go, rust, java, ruby, php
+DEFAULT_GITIGNORE_TEMPLATES="node,python"
+
+# Colors (set to false to disable colored output)
+USE_COLORS=true
