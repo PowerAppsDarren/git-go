@@ -297,6 +297,11 @@ cmd_new() {
     
     # Interactive mode if name not provided
     if [[ -z "$repo_name" ]]; then
+        # In dry-run mode, we need a name
+        if [[ "$DRY_RUN" == "true" ]]; then
+            error "New command requires --name parameter"
+            exit 1
+        fi
         echo -e "${BOLD}Create New Repository${NC}\n"
         read -p "Repository name: " repo_name
     fi
@@ -458,6 +463,11 @@ cmd_fork() {
     
     # Interactive mode if URL not provided
     if [[ -z "$repo_url" ]]; then
+        # In dry-run mode, we need a URL
+        if [[ "$DRY_RUN" == "true" ]]; then
+            error "Fork command requires --url parameter"
+            exit 1
+        fi
         echo -e "${BOLD}Fork Repository${NC}\n"
         read -p "Repository URL: " repo_url
     fi
