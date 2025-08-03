@@ -3,6 +3,8 @@ test-*
 tmp/
 temp/
 
+scratch.md
+
 # OS
 .DS_Store
 Thumbs.db

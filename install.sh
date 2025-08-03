@@ -16,7 +16,7 @@ NC='\033[0m'
 # Configuration
 INSTALL_DIR="${INSTALL_DIR:-$HOME/.local/share/git-go}"
 BIN_DIR="${BIN_DIR:-$HOME/.local/bin}"
-REPO_URL="https://github.com/darrenabramson/git-go.git"
+REPO_URL="https://github.com/PowerAppsDarren/git-go.git"
 
 # Functions
 error() {
