@@ -114,6 +114,14 @@ info "New version will be: $NEW_VERSION"
 sed -i "s/VERSION=\"$CURRENT_VERSION\"/VERSION=\"$NEW_VERSION\"/" bin/git-go
 success "Updated version in bin/git-go"
 
+# Run tests before committing
+info "Running tests..."
+if ./tests/run_tests.sh; then
+    success "All tests passed"
+else
+    error "Tests failed! Fix issues before releasing."
+fi
+
 # Generate commit message based on changes
 info "Analyzing changes since last release..."
 

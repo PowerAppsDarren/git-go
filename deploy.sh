@@ -74,7 +74,17 @@ fi
 # Verify deployment
 if [ -x "$LAUNCHER" ]; then
     echo
-    echo -e "${GREEN}✅ Deployment successful!${NC}"
+    # Run tests
+echo
+echo -e "${BLUE}Running tests...${NC}"
+if ./tests/run_tests.sh; then
+    echo -e "${GREEN}✓ Tests passed${NC}"
+else
+    echo -e "${YELLOW}⚠️  Some tests failed (see above)${NC}"
+fi
+
+echo
+echo -e "${GREEN}✅ Deployment successful!${NC}"
     echo
     echo -e "${BLUE}You can now run git-go from anywhere:${NC}"
     echo -e "  ${YELLOW}git-go new --name my-project${NC}"

@@ -22,7 +22,7 @@ CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/git-go"
 CONFIG_FILE="$CONFIG_DIR/config"
 
 # Version
-VERSION="1.0.5"
+VERSION="1.0.6"
 
 # Load libraries
 source "$LIB_DIR/colors.sh"
@@ -71,6 +71,7 @@ ${BOLD}OPTIONS:${NC}
     -n, --name       Repository name (for new/fork)
     -u, --url        Repository URL (for fork)
     -d, --dir        Working directory (default: ~/src)
+    --dry-run        Validate inputs without creating anything
     -h, --help       Show help message
 
 ${BOLD}EXAMPLES:${NC}
@@ -84,6 +85,7 @@ parse_args() {
     COMMAND=""
     REPO_NAME=""
     REPO_URL=""
+    DRY_RUN=false
     
     while [[ $# -gt 0 ]]; do
         case $1 in
@@ -102,6 +104,10 @@ parse_args() {
             -d|--dir)
                 WORK_DIR="$2"
                 shift 2
+                ;;
+            --dry-run)
+                DRY_RUN=true
+                shift
                 ;;
             -h|--help)
                 usage
@@ -301,6 +307,12 @@ cmd_new() {
         exit 1
     fi
     
+    # If dry-run, just validate and exit
+    if [[ "$DRY_RUN" == "true" ]]; then
+        success "Validation passed for repository name: $repo_name"
+        exit 0
+    fi
+    
     local repo_dir="$WORK_DIR/$repo_name"
     
     # Check if already exists
@@ -425,10 +437,10 @@ EOF
     # Try to push
     if [[ -n "$GIT_PRIMARY_PREFIX" ]]; then
         step "Pushing to remotes"
-        if git push -u origin "$DEFAULT_BRANCH" 2>/dev/null; then
+        if git push -u origin "$DEFAULT_BRANCH" 2>&1; then
             success "Pushed to origin"
         else
-            warning "Could not push to origin. Create the repository first."
+            warning "Push to origin failed (this is normal if auto-create is disabled on your git server)"
         fi
     fi
     
@@ -458,6 +470,12 @@ cmd_fork() {
     if [[ -z "$author" ]] || [[ -z "$repo" ]]; then
         error "Could not parse repository URL"
         exit 1
+    fi
+    
+    # If dry-run, just validate and exit
+    if [[ "$DRY_RUN" == "true" ]]; then
+        success "Validation passed for fork URL: $repo_url"
+        exit 0
     fi
     
     local repo_name="${REPO_NAME:-$repo}"
