@@ -174,15 +174,52 @@ We love contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for 
 git clone https://github.com/yourusername/git-go.git
 cd git-go
 
-# Run tests
-./tests/test.sh
+# Open in your favorite editor
+cursor .  # or: code .
 
-# Make your changes
-# ...
+# The main script to edit is:
+# bin/git-go
 
-# Sync your changes
-./scripts/sync.sh
+# Deploy locally and run tests
+./deploy.sh
+
+# Test your changes
+git-go new --name test-project
+
+# When ready to release a new version
+./release.sh
 ```
+
+#### Development Workflow
+
+1. **Edit the code** - The main script is `bin/git-go`. Open it in Cursor or VS Code:
+   ```bash
+   cursor bin/git-go  # or: code bin/git-go
+   ```
+
+2. **Deploy locally** - This installs git-go to ~/bin and runs tests:
+   ```bash
+   ./deploy.sh
+   ```
+
+3. **Test manually** - Try out your changes:
+   ```bash
+   git-go new --name test-repo
+   ```
+
+4. **Release** - When ready to publish a new version:
+   ```bash
+   ./release.sh
+   ```
+
+#### Key Files
+
+- `bin/git-go` - Main executable script (this is what you edit!)
+- `lib/colors.sh` - Color output functions
+- `lib/git-utils.sh` - Git utility functions
+- `tests/` - Test suite
+- `deploy.sh` - Local deployment script (runs tests automatically)
+- `release.sh` - Version release script
 
 ## 📝 License
 
