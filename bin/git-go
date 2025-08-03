@@ -48,8 +48,7 @@ load_config() {
 
 # Show usage
 usage() {
-    cat << EOF
-${BOLD}Git-Go v${VERSION}${NC} - Intelligent Git Repository Manager
+    echo -e "${BOLD}Git-Go v${VERSION}${NC} - Intelligent Git Repository Manager
 
 ${BOLD}USAGE:${NC}
     git-go [OPTIONS] [COMMAND]
@@ -71,9 +70,7 @@ ${BOLD}OPTIONS:${NC}
 ${BOLD}EXAMPLES:${NC}
     git-go new --name my-project
     git-go fork --url https://github.com/user/repo
-    git-go config
-
-EOF
+    git-go config"
 }
 
 # Parse command line arguments
