@@ -28,14 +28,34 @@ Create and manage git repositories with smart sync scripts, VS Code integration,
 
 ### Quick Install
 
+The easiest way to install Git-Go is using our install script:
+
 ```bash
-curl -fsSL https://raw.githubusercontent.com/yourusername/git-go/main/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/PowerAppsDarren/git-go/main/install.sh | bash
 ```
+
+This will:
+- Download Git-Go to `~/.local/share/git-go`
+- Create the `git-go` command in `~/.local/bin`
+- Set up your initial configuration
 
 ### Manual Install
 
+If you prefer to review the install script first:
+
 ```bash
-git clone https://github.com/yourusername/git-go.git
+# Download and review the script
+curl -sSL https://raw.githubusercontent.com/PowerAppsDarren/git-go/main/install.sh -o install.sh
+less install.sh
+
+# Run it when ready
+bash install.sh
+```
+
+Or clone and install from source:
+
+```bash
+git clone https://github.com/PowerAppsDarren/git-go.git
 cd git-go
 ./install.sh
 ```
@@ -45,6 +65,20 @@ cd git-go
 - Git 2.0+
 - Bash 4.0+
 - Optional: VS Code for IDE integration
+
+### Post-Installation
+
+If `git-go` is not found after installation, add `~/.local/bin` to your PATH:
+
+```bash
+# For bash
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
+
+# For zsh
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+```
 
 ## 🚀 Usage
 
