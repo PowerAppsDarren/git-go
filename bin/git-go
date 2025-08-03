@@ -22,7 +22,7 @@ CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/git-go"
 CONFIG_FILE="$CONFIG_DIR/config"
 
 # Version
-VERSION="1.0.6"
+VERSION="1.0.7"
 
 # Load libraries
 source "$LIB_DIR/colors.sh"
