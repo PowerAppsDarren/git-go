@@ -1,9 +1,13 @@
+scratch.md
+image.png
+
+
 # Test artifacts
 test-*
 tmp/
 temp/
 
-scratch.md
+
 
 # OS
 .DS_Store
