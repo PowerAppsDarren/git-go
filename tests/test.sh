@@ -3,7 +3,8 @@
 # Git-Go Test Suite
 #
 
-set -e
+# Don't exit on error - we want to run all tests
+set +e
 
 # Colors
 RED='\033[0;31m'
@@ -49,6 +50,19 @@ run_test() {
 export WORK_DIR="$TEST_DIR"
 export GIT_PRIMARY_PREFIX="git@github.com:"
 export GIT_PRIMARY_USER="testuser"
+
+# Create a test config to avoid setup wizard
+export CONFIG_DIR="$TEST_DIR/.config/git-go"
+mkdir -p "$CONFIG_DIR"
+cat > "$CONFIG_DIR/config" << EOF
+# Test configuration
+GIT_PRIMARY_HOST="github.com"
+GIT_PRIMARY_USER="testuser"
+GIT_PRIMARY_PREFIX="git@github.com:"
+DEFAULT_BRANCH="main"
+ENABLE_VSCODE_INTEGRATION=true
+ENABLE_CLAUDE_MD=true
+EOF
 
 # Tests
 echo -e "${BLUE}Running Git-Go Tests${NC}\n"
@@ -106,6 +120,15 @@ if [[ -f "$TEST_DIR/test-project/CLAUDE.md" ]]; then
     pass "CLAUDE.md created"
 else
     fail "CLAUDE.md creation failed" "File not found"
+fi
+
+# Test 6a: Template files creation
+run_test "Template files creation"
+if [[ -f "$TEST_DIR/test-project/roadmap.md" ]] && \
+   [[ -d "$TEST_DIR/test-project/ai-chats" ]]; then
+    pass "Template files created"
+else
+    fail "Template files creation failed" "roadmap.md or ai-chats directory not found"
 fi
 
 # Test 7: Repository name validation

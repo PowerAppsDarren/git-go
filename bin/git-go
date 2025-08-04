@@ -157,10 +157,250 @@ create_vscode_integration() {
 EOF
 }
 
+# Get application subtype based on type
+get_app_subtype() {
+    local app_type="$1"
+    local subtype=""
+    
+    case "$app_type" in
+        "Web Applications")
+            echo -e "\n${BOLD}Select Web Application Subtype:${NC}" >&2
+            echo "  1) Static Sites (marketing pages, portfolios, documentation)" >&2
+            echo "  2) Single Page Apps/SPAs (Gmail, Twitter, Spotify Web)" >&2
+            echo "  3) Progressive Web Apps/PWAs (installable web apps with offline support)" >&2
+            echo "  4) Server-Side Rendered/SSR (e-commerce, blogs, news sites)" >&2
+            echo "  5) Jamstack Sites (static + APIs, Gatsby, Astro sites)" >&2
+            echo "  6) Web-Based SaaS (Stripe Dashboard, Notion, Linear)" >&2
+            echo "  7) Enterprise Web Apps (CRMs, ERPs, internal tools)" >&2
+            echo "  8) E-commerce Platforms (Shopify stores, marketplaces)" >&2
+            echo "  9) Social Networks (forums, communities, dating apps)" >&2
+            echo " 10) Content Management Systems (WordPress, Ghost, Strapi)" >&2
+            echo " 11) Learning Management Systems (course platforms, online schools)" >&2
+            echo " 12) Real-time Collaboration (Google Docs, Figma, Miro)" >&2
+            echo " 13) Dashboards/Analytics (admin panels, BI tools)" >&2
+            echo " 14) Streaming Platforms (YouTube, Netflix web versions)" >&2
+            read -p "Choice (1-14): " choice >&2
+            case "$choice" in
+                1) subtype="Static Sites" ;;
+                2) subtype="Single Page Apps/SPAs" ;;
+                3) subtype="Progressive Web Apps/PWAs" ;;
+                4) subtype="Server-Side Rendered/SSR" ;;
+                5) subtype="Jamstack Sites" ;;
+                6) subtype="Web-Based SaaS" ;;
+                7) subtype="Enterprise Web Apps" ;;
+                8) subtype="E-commerce Platforms" ;;
+                9) subtype="Social Networks" ;;
+                10) subtype="Content Management Systems" ;;
+                11) subtype="Learning Management Systems" ;;
+                12) subtype="Real-time Collaboration" ;;
+                13) subtype="Dashboards/Analytics" ;;
+                14) subtype="Streaming Platforms" ;;
+                *) subtype="Web Application" ;;
+            esac
+            ;;
+        "Mobile Applications")
+            echo -e "\n${BOLD}Select Mobile Application Subtype:${NC}" >&2
+            echo "  1) Native iOS (Swift/SwiftUI apps)" >&2
+            echo "  2) Native Android (Kotlin/Java apps)" >&2
+            echo "  3) Cross-Platform Mobile (React Native, Flutter, Ionic)" >&2
+            echo "  4) Hybrid Apps (Capacitor, Cordova - web wrapped as mobile)" >&2
+            echo "  5) Mobile Games (Unity, native game engines)" >&2
+            read -p "Choice (1-5): " choice >&2
+            case "$choice" in
+                1) subtype="Native iOS" ;;
+                2) subtype="Native Android" ;;
+                3) subtype="Cross-Platform Mobile" ;;
+                4) subtype="Hybrid Apps" ;;
+                5) subtype="Mobile Games" ;;
+                *) subtype="Mobile Application" ;;
+            esac
+            ;;
+        "Desktop Applications")
+            echo -e "\n${BOLD}Select Desktop Application Subtype:${NC}" >&2
+            echo "  1) Electron Apps (VS Code, Discord, Slack)" >&2
+            echo "  2) Native Windows (WPF, WinForms, UWP apps)" >&2
+            echo "  3) Native macOS (Swift/AppKit apps)" >&2
+            echo "  4) Native Linux (GTK, Qt applications)" >&2
+            echo "  5) Cross-Platform Native (Tauri, Qt, JavaFX)" >&2
+            read -p "Choice (1-5): " choice >&2
+            case "$choice" in
+                1) subtype="Electron Apps" ;;
+                2) subtype="Native Windows" ;;
+                3) subtype="Native macOS" ;;
+                4) subtype="Native Linux" ;;
+                5) subtype="Cross-Platform Native" ;;
+                *) subtype="Desktop Application" ;;
+            esac
+            ;;
+        "Command Line Applications")
+            echo -e "\n${BOLD}Select Command Line Application Subtype:${NC}" >&2
+            echo "  1) CLI Tools (Git, npm, development tools)" >&2
+            echo "  2) Terminal UIs/TUIs (htop, vim, terminal dashboards)" >&2
+            echo "  3) Build Tools (Webpack, Vite, bundlers)" >&2
+            echo "  4) Automation Scripts (Python/Bash/Node scripts)" >&2
+            read -p "Choice (1-4): " choice >&2
+            case "$choice" in
+                1) subtype="CLI Tools" ;;
+                2) subtype="Terminal UIs/TUIs" ;;
+                3) subtype="Build Tools" ;;
+                4) subtype="Automation Scripts" ;;
+                *) subtype="Command Line Tool" ;;
+            esac
+            ;;
+        "API/Backend Services")
+            echo -e "\n${BOLD}Select API/Backend Service Subtype:${NC}" >&2
+            echo "  1) REST APIs (traditional HTTP services)" >&2
+            echo "  2) GraphQL APIs (flexible query services)" >&2
+            echo "  3) Microservices (distributed service architectures)" >&2
+            echo "  4) Serverless Functions (Lambda, Vercel Functions)" >&2
+            echo "  5) WebSocket Services (real-time communication)" >&2
+            echo "  6) gRPC Services (high-performance RPC)" >&2
+            read -p "Choice (1-6): " choice >&2
+            case "$choice" in
+                1) subtype="REST APIs" ;;
+                2) subtype="GraphQL APIs" ;;
+                3) subtype="Microservices" ;;
+                4) subtype="Serverless Functions" ;;
+                5) subtype="WebSocket Services" ;;
+                6) subtype="gRPC Services" ;;
+                *) subtype="API/Backend Service" ;;
+            esac
+            ;;
+        "Game Development")
+            echo -e "\n${BOLD}Select Game Development Subtype:${NC}" >&2
+            echo "  1) Browser Games (JavaScript/WebGL games)" >&2
+            echo "  2) Mobile Games (iOS/Android native or Unity)" >&2
+            echo "  3) PC Games (Steam, Epic Games)" >&2
+            echo "  4) Console Games (PlayStation, Xbox, Nintendo)" >&2
+            read -p "Choice (1-4): " choice >&2
+            case "$choice" in
+                1) subtype="Browser Games" ;;
+                2) subtype="Mobile Games" ;;
+                3) subtype="PC Games" ;;
+                4) subtype="Console Games" ;;
+                *) subtype="Game" ;;
+            esac
+            ;;
+        "Embedded/IoT Applications")
+            echo -e "\n${BOLD}Select Embedded/IoT Application Subtype:${NC}" >&2
+            echo "  1) Firmware (microcontroller programming)" >&2
+            echo "  2) IoT Devices (smart home, industrial sensors)" >&2
+            echo "  3) Automotive (car infotainment systems)" >&2
+            echo "  4) Wearables (smartwatch apps)" >&2
+            read -p "Choice (1-4): " choice >&2
+            case "$choice" in
+                1) subtype="Firmware" ;;
+                2) subtype="IoT Devices" ;;
+                3) subtype="Automotive" ;;
+                4) subtype="Wearables" ;;
+                *) subtype="Embedded/IoT Application" ;;
+            esac
+            ;;
+        "Browser Extensions")
+            echo -e "\n${BOLD}Select Browser Extension Subtype:${NC}" >&2
+            echo "  1) Chrome Extensions (ad blockers, productivity tools)" >&2
+            echo "  2) Firefox Add-ons (privacy tools, themes)" >&2
+            echo "  3) Safari Extensions (password managers)" >&2
+            read -p "Choice (1-3): " choice >&2
+            case "$choice" in
+                1) subtype="Chrome Extensions" ;;
+                2) subtype="Firefox Add-ons" ;;
+                3) subtype="Safari Extensions" ;;
+                *) subtype="Browser Extension" ;;
+            esac
+            ;;
+        "AI/ML Applications")
+            echo -e "\n${BOLD}Select AI/ML Application Subtype:${NC}" >&2
+            echo "  1) Chatbots (customer service, virtual assistants)" >&2
+            echo "  2) Computer Vision (image recognition, filters)" >&2
+            echo "  3) NLP Tools (translation, sentiment analysis)" >&2
+            echo "  4) Recommendation Systems (Netflix, Amazon suggestions)" >&2
+            read -p "Choice (1-4): " choice >&2
+            case "$choice" in
+                1) subtype="Chatbots" ;;
+                2) subtype="Computer Vision" ;;
+                3) subtype="NLP Tools" ;;
+                4) subtype="Recommendation Systems" ;;
+                *) subtype="AI/ML Application" ;;
+            esac
+            ;;
+        "Specialized Applications")
+            echo -e "\n${BOLD}Select Specialized Application Subtype:${NC}" >&2
+            echo "  1) AR/VR Apps (Meta Quest, Apple Vision Pro)" >&2
+            echo "  2) Blockchain/Web3 (DApps, smart contracts)" >&2
+            echo "  3) Data Visualization (Tableau, D3.js apps)" >&2
+            echo "  4) Scientific Computing (MATLAB, Jupyter notebooks)" >&2
+            echo "  5) CAD/3D Software (AutoCAD, Blender plugins)" >&2
+            read -p "Choice (1-5): " choice >&2
+            case "$choice" in
+                1) subtype="AR/VR Apps" ;;
+                2) subtype="Blockchain/Web3" ;;
+                3) subtype="Data Visualization" ;;
+                4) subtype="Scientific Computing" ;;
+                5) subtype="CAD/3D Software" ;;
+                *) subtype="Specialized Application" ;;
+            esac
+            ;;
+        *)
+            subtype="Application"
+            ;;
+    esac
+    
+    echo "$subtype"
+}
+
+# Copy template files based on application type
+copy_template_files() {
+    local repo_dir=$1
+    local repo_name=$2
+    local app_type=$3
+    local app_subtype=$4
+    
+    # Create README.md with application type information
+    cat > "$repo_dir/README.md" << EOF
+# $repo_name
+
+**Application Type:** $app_type  
+**Subtype:** $app_subtype
+
+## Description
+
+Add your project description here.
+
+## Getting Started
+
+### Prerequisites
+
+- List any prerequisites here
+
+### Installation
+
+\`\`\`bash
+# Add installation steps
+\`\`\`
+
+### Usage
+
+\`\`\`bash
+# Add usage examples
+\`\`\`
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+EOF
+}
+
 # Create claude.md file
 create_claude_md() {
     local repo_dir=$1
     local repo_name=$2
+    local app_type=$3
+    local app_subtype=$4
     
     if [[ "$ENABLE_CLAUDE_MD" != "true" ]]; then
         return
@@ -172,6 +412,9 @@ create_claude_md() {
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project: $repo_name
+
+**Application Type:** $app_type  
+**Subtype:** $app_subtype
 
 ### Quick Start
 - Build: \`npm run build\` (update as needed)
@@ -293,6 +536,8 @@ EOF
 # Create a new repository
 cmd_new() {
     local repo_name="$REPO_NAME"
+    local app_type=""
+    local app_subtype=""
     
     # Interactive mode if name not provided
     if [[ -z "$repo_name" ]]; then
@@ -309,6 +554,40 @@ cmd_new() {
     if ! validate_repo_name "$repo_name"; then
         error "Invalid repository name. Use only letters, numbers, dots, hyphens, and underscores."
         exit 1
+    fi
+    
+    # Ask for application type (only in interactive mode)
+    if [[ "$DRY_RUN" != "true" ]]; then
+        echo
+        echo -e "${BOLD}Select Application Type:${NC}"
+        echo "  1) Web Applications"
+        echo "  2) Mobile Applications"
+        echo "  3) Desktop Applications"
+        echo "  4) Command Line Applications"
+        echo "  5) API/Backend Services"
+        echo "  6) Game Development"
+        echo "  7) Embedded/IoT Applications"
+        echo "  8) Browser Extensions"
+        echo "  9) AI/ML Applications"
+        echo " 10) Specialized Applications"
+        read -p "Choice (1-10): " app_choice
+        
+        case "$app_choice" in
+            1) app_type="Web Applications" ;;
+            2) app_type="Mobile Applications" ;;
+            3) app_type="Desktop Applications" ;;
+            4) app_type="Command Line Applications" ;;
+            5) app_type="API/Backend Services" ;;
+            6) app_type="Game Development" ;;
+            7) app_type="Embedded/IoT Applications" ;;
+            8) app_type="Browser Extensions" ;;
+            9) app_type="AI/ML Applications" ;;
+            10) app_type="Specialized Applications" ;;
+            *) app_type="General Application" ;;
+        esac
+        
+        # Get subtype based on type
+        app_subtype=$(get_app_subtype "$app_type")
     fi
     
     # If dry-run, just validate and exit
@@ -335,11 +614,8 @@ cmd_new() {
     # Create initial files
     step "Creating initial files"
     
-    echo "# $repo_name" > README.md
-    echo "" >> README.md
-    echo "## Description" >> README.md
-    echo "" >> README.md
-    echo "Add your project description here." >> README.md
+    # Use copy_template_files to create README.md with app type info
+    copy_template_files "$repo_dir" "$repo_name" "$app_type" "$app_subtype"
     
     # Create .gitignore
     touch .gitignore
@@ -414,7 +690,7 @@ EOF
     create_vscode_integration "$repo_dir"
     
     # Create claude.md
-    create_claude_md "$repo_dir" "$repo_name"
+    create_claude_md "$repo_dir" "$repo_name" "$app_type" "$app_subtype"
     
     # Create sync script
     create_sync_script "$repo_dir" "$repo_name" "false"
@@ -544,8 +820,8 @@ cmd_fork() {
     # Create VS Code integration
     create_vscode_integration "$repo_dir"
     
-    # Create claude.md
-    create_claude_md "$repo_dir" "$repo_name"
+    # Create claude.md (for fork)
+    create_claude_md "$repo_dir" "$repo_name" "" ""
     
     # Create sync script
     create_sync_script "$repo_dir" "$repo_name" "true"
