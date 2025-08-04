@@ -121,8 +121,7 @@ parse_args() {
         esac
     done
     
-    # Default to help if no command
-    COMMAND=${COMMAND:-help}
+    # Don't default to anything - let main() handle it
 }
 
 # Create VS Code integration
@@ -499,7 +498,17 @@ cmd_fork() {
         exit 0
     fi
     
-    local repo_name="${REPO_NAME:-$repo}"
+    # Use provided name or ask for it
+    local repo_name="$REPO_NAME"
+    if [[ -z "$repo_name" ]] && [[ "$DRY_RUN" != "true" ]]; then
+        echo
+        read -p "Repository name (press Enter to use '$repo'): " custom_name
+        repo_name="${custom_name:-$repo}"
+    elif [[ -z "$repo_name" ]]; then
+        # For dry-run, use the original repo name
+        repo_name="$repo"
+    fi
+    
     local repo_dir="$WORK_DIR/$repo_name"
     
     # Check if already exists
@@ -701,9 +710,66 @@ EOF
     echo "You can edit this file anytime with: git-go config"
 }
 
+# Show interactive menu
+show_menu() {
+    echo -e "${BOLD}Git-Go v${VERSION}${NC} - Intelligent Git Repository Manager\n"
+    echo "What would you like to do?"
+    echo
+    echo -e "  ${BOLD}1)${NC} Create a new repository"
+    echo -e "  ${BOLD}2)${NC} Fork an existing repository"
+    echo -e "  ${BOLD}3)${NC} Edit configuration"
+    echo -e "  ${BOLD}4)${NC} Run setup wizard"
+    echo -e "  ${BOLD}5)${NC} Show version"
+    echo -e "  ${BOLD}6)${NC} Show help"
+    echo -e "  ${BOLD}7)${NC} Exit"
+    echo
+    read -p "Enter your choice (1-7): " choice
+    
+    case $choice in
+        1)
+            COMMAND="new"
+            ;;
+        2)
+            COMMAND="fork"
+            ;;
+        3)
+            COMMAND="config"
+            ;;
+        4)
+            COMMAND="setup"
+            ;;
+        5)
+            COMMAND="version"
+            ;;
+        6)
+            COMMAND="help"
+            ;;
+        7)
+            echo "Goodbye!"
+            exit 0
+            ;;
+        *)
+            error "Invalid choice: $choice"
+            exit 1
+            ;;
+    esac
+}
+
 # Main execution
 main() {
     parse_args "$@"
+    
+    # If no command was provided, show interactive menu
+    if [[ -z "$COMMAND" ]]; then
+        # Check if config exists first
+        if [[ ! -f "$CONFIG_FILE" ]]; then
+            echo -e "${YELLOW}No configuration found. Running setup wizard...${NC}\n"
+            setup_wizard
+            echo
+        fi
+        load_config
+        show_menu
+    fi
     
     # Check if config exists (unless running setup/help/version)
     if [[ ! -f "$CONFIG_FILE" ]] && [[ ! "$COMMAND" =~ ^(setup|help|version|config)$ ]]; then
@@ -735,6 +801,9 @@ main() {
             ;;
         help)
             usage
+            ;;
+        "")
+            # Empty command is handled above by showing menu
             ;;
         *)
             error "Unknown command: $COMMAND"

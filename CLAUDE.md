@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## AI Chat Documentation
+
+**IMPORTANT**: You MUST follow the documentation requirements specified in `ai-chats/ai-chats.md`. This includes creating and continuously updating session documentation files in the `ai-chats/` directory.
+
 ## Repository Purpose
 
 Git-Go is a professional Git repository initialization and management tool that automates repository creation with intelligent sync scripts, VS Code integration, and AI-assisted development support.
