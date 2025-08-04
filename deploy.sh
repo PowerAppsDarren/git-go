@@ -47,6 +47,17 @@ EOF
 chmod +x "$LAUNCHER"
 echo -e "${GREEN}✓ Launcher created at ${LAUNCHER}${NC}"
 
+# Create gitgo alias
+GITGO_ALIAS="${USER_BIN_DIR}/gitgo"
+if [[ ! -e "$GITGO_ALIAS" ]]; then
+    ln -s "$LAUNCHER" "$GITGO_ALIAS"
+    echo -e "${GREEN}✓ Created gitgo alias${NC}"
+elif [[ -L "$GITGO_ALIAS" ]]; then
+    echo -e "${GREEN}✓ gitgo alias already exists${NC}"
+else
+    echo -e "${YELLOW}⚠️  gitgo exists but is not a symlink${NC}"
+fi
+
 # Check if ~/bin is in PATH
 if [[ ":$PATH:" != *":$USER_BIN_DIR:"* ]]; then
     echo
