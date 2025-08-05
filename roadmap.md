@@ -41,6 +41,10 @@ Git-Go is a professional Git repository initialization and management tool that 
 - [ ] Enhanced error handling and recovery
 - [ ] Remote repository creation via GitHub API
 - [ ] Template customization options
+- [ ] **Batch Operations** (#2 from Suggested Features)
+  - Create multiple repositories from a config file
+  - Bulk update existing repositories
+  - Mass sync operations
 
 ## Planned Features 📋
 
