@@ -225,8 +225,9 @@ get_app_subtype() {
             echo " 12) Real-time Collaboration (Google Docs, Figma, Miro)" >&2
             echo " 13) Dashboards/Analytics (admin panels, BI tools)" >&2
             echo " 14) Streaming Platforms (YouTube, Netflix web versions)" >&2
-            echo " 15) Other" >&2
-            read -p "Choice (1-15): " choice >&2
+            echo " 15) Electron Apps (Web tech as desktop: VS Code, Discord)" >&2
+            echo " 16) Other" >&2
+            read -p "Choice (1-16): " choice >&2
             case "$choice" in
                 1) subtype="Static Sites" ;;
                 2) subtype="Single Page Apps/SPAs" ;;
@@ -242,7 +243,8 @@ get_app_subtype() {
                 12) subtype="Real-time Collaboration" ;;
                 13) subtype="Dashboards/Analytics" ;;
                 14) subtype="Streaming Platforms" ;;
-                15) 
+                15) subtype="Electron Apps" ;;
+                16) 
                     read -p "Enter custom web application subtype: " subtype >&2
                     [[ -z "$subtype" ]] && subtype="Custom Web Application"
                     ;;
