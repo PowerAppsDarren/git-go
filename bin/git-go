@@ -27,6 +27,7 @@ VERSION="1.0.9"
 # Library loading flags
 COLORS_LOADED=false
 GIT_UTILS_LOADED=false
+PERF_UTILS_LOADED=false
 
 # Lazy load color library
 load_colors() {
@@ -41,6 +42,14 @@ load_git_utils() {
     if [[ "$GIT_UTILS_LOADED" != "true" ]]; then
         source "$LIB_DIR/git-utils.sh"
         GIT_UTILS_LOADED=true
+    fi
+}
+
+# Lazy load performance utils
+load_perf_utils() {
+    if [[ "$PERF_UTILS_LOADED" != "true" ]]; then
+        source "$LIB_DIR/performance-utils.sh"
+        PERF_UTILS_LOADED=true
     fi
 }
 
@@ -211,7 +220,8 @@ get_app_subtype() {
             echo " 12) Real-time Collaboration (Google Docs, Figma, Miro)" >&2
             echo " 13) Dashboards/Analytics (admin panels, BI tools)" >&2
             echo " 14) Streaming Platforms (YouTube, Netflix web versions)" >&2
-            read -p "Choice (1-14): " choice >&2
+            echo " 15) Other" >&2
+            read -p "Choice (1-15): " choice >&2
             case "$choice" in
                 1) subtype="Static Sites" ;;
                 2) subtype="Single Page Apps/SPAs" ;;
@@ -227,6 +237,10 @@ get_app_subtype() {
                 12) subtype="Real-time Collaboration" ;;
                 13) subtype="Dashboards/Analytics" ;;
                 14) subtype="Streaming Platforms" ;;
+                15) 
+                    read -p "Enter custom web application subtype: " subtype >&2
+                    [[ -z "$subtype" ]] && subtype="Custom Web Application"
+                    ;;
                 *) subtype="Web Application" ;;
             esac
             ;;
@@ -237,13 +251,18 @@ get_app_subtype() {
             echo "  3) Cross-Platform Mobile (React Native, Flutter, Ionic)" >&2
             echo "  4) Hybrid Apps (Capacitor, Cordova - web wrapped as mobile)" >&2
             echo "  5) Mobile Games (Unity, native game engines)" >&2
-            read -p "Choice (1-5): " choice >&2
+            echo "  6) Other" >&2
+            read -p "Choice (1-6): " choice >&2
             case "$choice" in
                 1) subtype="Native iOS" ;;
                 2) subtype="Native Android" ;;
                 3) subtype="Cross-Platform Mobile" ;;
                 4) subtype="Hybrid Apps" ;;
                 5) subtype="Mobile Games" ;;
+                6) 
+                    read -p "Enter custom mobile application subtype: " subtype >&2
+                    [[ -z "$subtype" ]] && subtype="Custom Mobile Application"
+                    ;;
                 *) subtype="Mobile Application" ;;
             esac
             ;;
@@ -254,13 +273,18 @@ get_app_subtype() {
             echo "  3) Native macOS (Swift/AppKit apps)" >&2
             echo "  4) Native Linux (GTK, Qt applications)" >&2
             echo "  5) Cross-Platform Native (Tauri, Qt, JavaFX)" >&2
-            read -p "Choice (1-5): " choice >&2
+            echo "  6) Other" >&2
+            read -p "Choice (1-6): " choice >&2
             case "$choice" in
                 1) subtype="Electron Apps" ;;
                 2) subtype="Native Windows" ;;
                 3) subtype="Native macOS" ;;
                 4) subtype="Native Linux" ;;
                 5) subtype="Cross-Platform Native" ;;
+                6) 
+                    read -p "Enter custom desktop application subtype: " subtype >&2
+                    [[ -z "$subtype" ]] && subtype="Custom Desktop Application"
+                    ;;
                 *) subtype="Desktop Application" ;;
             esac
             ;;
@@ -270,12 +294,17 @@ get_app_subtype() {
             echo "  2) Terminal UIs/TUIs (htop, vim, terminal dashboards)" >&2
             echo "  3) Build Tools (Webpack, Vite, bundlers)" >&2
             echo "  4) Automation Scripts (Python/Bash/Node scripts)" >&2
-            read -p "Choice (1-4): " choice >&2
+            echo "  5) Other" >&2
+            read -p "Choice (1-5): " choice >&2
             case "$choice" in
                 1) subtype="CLI Tools" ;;
                 2) subtype="Terminal UIs/TUIs" ;;
                 3) subtype="Build Tools" ;;
                 4) subtype="Automation Scripts" ;;
+                5) 
+                    read -p "Enter custom command line application subtype: " subtype >&2
+                    [[ -z "$subtype" ]] && subtype="Custom Command Line Tool"
+                    ;;
                 *) subtype="Command Line Tool" ;;
             esac
             ;;
@@ -287,7 +316,8 @@ get_app_subtype() {
             echo "  4) Serverless Functions (Lambda, Vercel Functions)" >&2
             echo "  5) WebSocket Services (real-time communication)" >&2
             echo "  6) gRPC Services (high-performance RPC)" >&2
-            read -p "Choice (1-6): " choice >&2
+            echo "  7) Other" >&2
+            read -p "Choice (1-7): " choice >&2
             case "$choice" in
                 1) subtype="REST APIs" ;;
                 2) subtype="GraphQL APIs" ;;
@@ -295,6 +325,10 @@ get_app_subtype() {
                 4) subtype="Serverless Functions" ;;
                 5) subtype="WebSocket Services" ;;
                 6) subtype="gRPC Services" ;;
+                7) 
+                    read -p "Enter custom API/backend service subtype: " subtype >&2
+                    [[ -z "$subtype" ]] && subtype="Custom API/Backend Service"
+                    ;;
                 *) subtype="API/Backend Service" ;;
             esac
             ;;
@@ -304,12 +338,17 @@ get_app_subtype() {
             echo "  2) Mobile Games (iOS/Android native or Unity)" >&2
             echo "  3) PC Games (Steam, Epic Games)" >&2
             echo "  4) Console Games (PlayStation, Xbox, Nintendo)" >&2
-            read -p "Choice (1-4): " choice >&2
+            echo "  5) Other" >&2
+            read -p "Choice (1-5): " choice >&2
             case "$choice" in
                 1) subtype="Browser Games" ;;
                 2) subtype="Mobile Games" ;;
                 3) subtype="PC Games" ;;
                 4) subtype="Console Games" ;;
+                5) 
+                    read -p "Enter custom game development subtype: " subtype >&2
+                    [[ -z "$subtype" ]] && subtype="Custom Game"
+                    ;;
                 *) subtype="Game" ;;
             esac
             ;;
@@ -319,12 +358,17 @@ get_app_subtype() {
             echo "  2) IoT Devices (smart home, industrial sensors)" >&2
             echo "  3) Automotive (car infotainment systems)" >&2
             echo "  4) Wearables (smartwatch apps)" >&2
-            read -p "Choice (1-4): " choice >&2
+            echo "  5) Other" >&2
+            read -p "Choice (1-5): " choice >&2
             case "$choice" in
                 1) subtype="Firmware" ;;
                 2) subtype="IoT Devices" ;;
                 3) subtype="Automotive" ;;
                 4) subtype="Wearables" ;;
+                5) 
+                    read -p "Enter custom embedded/IoT application subtype: " subtype >&2
+                    [[ -z "$subtype" ]] && subtype="Custom Embedded/IoT Application"
+                    ;;
                 *) subtype="Embedded/IoT Application" ;;
             esac
             ;;
@@ -333,11 +377,16 @@ get_app_subtype() {
             echo "  1) Chrome Extensions (ad blockers, productivity tools)" >&2
             echo "  2) Firefox Add-ons (privacy tools, themes)" >&2
             echo "  3) Safari Extensions (password managers)" >&2
-            read -p "Choice (1-3): " choice >&2
+            echo "  4) Other" >&2
+            read -p "Choice (1-4): " choice >&2
             case "$choice" in
                 1) subtype="Chrome Extensions" ;;
                 2) subtype="Firefox Add-ons" ;;
                 3) subtype="Safari Extensions" ;;
+                4) 
+                    read -p "Enter custom browser extension subtype: " subtype >&2
+                    [[ -z "$subtype" ]] && subtype="Custom Browser Extension"
+                    ;;
                 *) subtype="Browser Extension" ;;
             esac
             ;;
@@ -347,12 +396,17 @@ get_app_subtype() {
             echo "  2) Computer Vision (image recognition, filters)" >&2
             echo "  3) NLP Tools (translation, sentiment analysis)" >&2
             echo "  4) Recommendation Systems (Netflix, Amazon suggestions)" >&2
-            read -p "Choice (1-4): " choice >&2
+            echo "  5) Other" >&2
+            read -p "Choice (1-5): " choice >&2
             case "$choice" in
                 1) subtype="Chatbots" ;;
                 2) subtype="Computer Vision" ;;
                 3) subtype="NLP Tools" ;;
                 4) subtype="Recommendation Systems" ;;
+                5) 
+                    read -p "Enter custom AI/ML application subtype: " subtype >&2
+                    [[ -z "$subtype" ]] && subtype="Custom AI/ML Application"
+                    ;;
                 *) subtype="AI/ML Application" ;;
             esac
             ;;
@@ -363,13 +417,18 @@ get_app_subtype() {
             echo "  3) Data Visualization (Tableau, D3.js apps)" >&2
             echo "  4) Scientific Computing (MATLAB, Jupyter notebooks)" >&2
             echo "  5) CAD/3D Software (AutoCAD, Blender plugins)" >&2
-            read -p "Choice (1-5): " choice >&2
+            echo "  6) Other" >&2
+            read -p "Choice (1-6): " choice >&2
             case "$choice" in
                 1) subtype="AR/VR Apps" ;;
                 2) subtype="Blockchain/Web3" ;;
                 3) subtype="Data Visualization" ;;
                 4) subtype="Scientific Computing" ;;
                 5) subtype="CAD/3D Software" ;;
+                6) 
+                    read -p "Enter custom specialized application subtype: " subtype >&2
+                    [[ -z "$subtype" ]] && subtype="Custom Specialized Application"
+                    ;;
                 *) subtype="Specialized Application" ;;
             esac
             ;;
@@ -387,6 +446,7 @@ copy_template_files() {
     local repo_name=$2
     local app_type=$3
     local app_subtype=$4
+    local app_description=${5:-"Add your project description here."}
     
     # Create README.md with application type information
     cat > "$repo_dir/README.md" << EOF
@@ -397,7 +457,7 @@ copy_template_files() {
 
 ## Description
 
-Add your project description here.
+$app_description
 
 ## Getting Started
 
@@ -569,11 +629,33 @@ EOF
 launch_editor() {
     local repo_dir="$1"
     
-    if command_exists cursor; then
+    load_perf_utils
+    
+    if cached_command_exists cursor; then
         echo
-        info "Launching Cursor..."
-        cursor "$repo_dir" &
-    elif command_exists code; then
+        info "Launching Cursor with claudia..."
+        # Create a temporary script to run claudia after terminal opens
+        local temp_script=$(mktemp)
+        cat > "$temp_script" << 'EOF'
+#!/bin/bash
+cd "$(dirname "$0")"
+# Give terminal time to initialize
+sleep 0.5
+# Run claudia
+claudia
+# Keep terminal open
+exec bash
+EOF
+        chmod +x "$temp_script"
+        
+        # Launch cursor with terminal running claudia
+        cursor "$repo_dir" --new-window --goto "$repo_dir" --command "workbench.action.terminal.new" &
+        sleep 1
+        # Send command to run claudia in the terminal
+        cursor --goto "$repo_dir" --command "workbench.action.terminal.sendSequence" --args '{"text":"claudia\n"}' &
+        
+        rm -f "$temp_script"
+    elif cached_command_exists code; then
         echo
         info "Launching VS Code..."
         code "$repo_dir" &
@@ -701,7 +783,8 @@ select_application_type() {
     echo "  8) Browser Extensions"
     echo "  9) AI/ML Applications"
     echo " 10) Specialized Applications"
-    read -p "Choice (1-10): " app_choice
+    echo " 11) Other"
+    read -p "Choice (1-11): " app_choice
     
     case "$app_choice" in
         1) SELECTED_APP_TYPE="Web Applications" ;;
@@ -714,11 +797,25 @@ select_application_type() {
         8) SELECTED_APP_TYPE="Browser Extensions" ;;
         9) SELECTED_APP_TYPE="AI/ML Applications" ;;
         10) SELECTED_APP_TYPE="Specialized Applications" ;;
+        11) 
+            read -p "Enter custom application type: " SELECTED_APP_TYPE
+            [[ -z "$SELECTED_APP_TYPE" ]] && SELECTED_APP_TYPE="Custom Application"
+            ;;
         *) SELECTED_APP_TYPE="General Application" ;;
     esac
     
-    # Get subtype based on type
-    SELECTED_APP_SUBTYPE=$(get_app_subtype "$SELECTED_APP_TYPE")
+    # Get subtype based on type (skip for custom types)
+    if [[ "$app_choice" == "11" ]] || [[ "$SELECTED_APP_TYPE" == "Custom Application" ]]; then
+        SELECTED_APP_SUBTYPE="$SELECTED_APP_TYPE"
+    else
+        SELECTED_APP_SUBTYPE=$(get_app_subtype "$SELECTED_APP_TYPE")
+    fi
+    
+    # Get application description
+    echo
+    echo -e "${BOLD}What is this application for?${NC}"
+    echo "(Describe the purpose and functionality of your application)"
+    read -p "> " SELECTED_APP_DESCRIPTION
 }
 
 # Create a new repository
@@ -729,6 +826,7 @@ cmd_new() {
     local repo_name="$REPO_NAME"
     local app_type=""
     local app_subtype=""
+    local app_description=""
     
     # Interactive mode if name not provided
     if [[ -z "$repo_name" ]]; then
@@ -752,6 +850,7 @@ cmd_new() {
         select_application_type
         app_type="$SELECTED_APP_TYPE"
         app_subtype="$SELECTED_APP_SUBTYPE"
+        app_description="$SELECTED_APP_DESCRIPTION"
     fi
     
     # If dry-run, just validate and exit
@@ -779,7 +878,7 @@ cmd_new() {
     step "Creating initial files"
     
     # Use copy_template_files to create README.md with app type info
-    copy_template_files "$repo_dir" "$repo_name" "$app_type" "$app_subtype"
+    copy_template_files "$repo_dir" "$repo_name" "$app_type" "$app_subtype" "$app_description"
     
     # Create .gitignore
     create_gitignore "$repo_dir"
@@ -934,11 +1033,13 @@ cmd_config() {
     fi
     
     # Open in editor
+    load_perf_utils
+    
     if [[ -n "$EDITOR" ]]; then
         $EDITOR "$CONFIG_FILE"
-    elif command_exists code; then
+    elif cached_command_exists code; then
         code "$CONFIG_FILE"
-    elif command_exists nano; then
+    elif cached_command_exists nano; then
         nano "$CONFIG_FILE"
     else
         vi "$CONFIG_FILE"
