@@ -22,14 +22,38 @@ CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/git-go"
 CONFIG_FILE="$CONFIG_DIR/config"
 
 # Version
-VERSION="1.0.8"
+VERSION="1.0.9"
 
-# Load libraries
-source "$LIB_DIR/colors.sh"
-source "$LIB_DIR/git-utils.sh"
+# Library loading flags
+COLORS_LOADED=false
+GIT_UTILS_LOADED=false
+
+# Lazy load color library
+load_colors() {
+    if [[ "$COLORS_LOADED" != "true" ]]; then
+        source "$LIB_DIR/colors.sh"
+        COLORS_LOADED=true
+    fi
+}
+
+# Lazy load git utils
+load_git_utils() {
+    if [[ "$GIT_UTILS_LOADED" != "true" ]]; then
+        source "$LIB_DIR/git-utils.sh"
+        GIT_UTILS_LOADED=true
+    fi
+}
+
+# Configuration cache
+CONFIG_LOADED=false
 
 # Load configuration
 load_config() {
+    # Skip if already loaded
+    if [[ "$CONFIG_LOADED" == "true" ]]; then
+        return
+    fi
+    
     # Default configuration
     GIT_PRIMARY_HOST="github.com"
     GIT_PRIMARY_USER="${USER}"
@@ -50,10 +74,14 @@ load_config() {
     
     # Set working directory
     WORK_DIR="${WORK_DIR:-$HOME/src}"
+    
+    # Mark as loaded
+    CONFIG_LOADED=true
 }
 
 # Show usage
 usage() {
+    load_colors
     echo -e "${BOLD}Git-Go v${VERSION}${NC} - Intelligent Git Repository Manager
 
 ${BOLD}USAGE:${NC}
@@ -63,6 +91,7 @@ ${BOLD}COMMANDS:${NC}
     new              Create a new repository
     fork             Fork an existing repository
     config           Edit configuration
+    status           Show repository sync status
     setup            Run setup wizard
     version          Show version information
     help             Show this help message
@@ -87,9 +116,12 @@ parse_args() {
     REPO_URL=""
     DRY_RUN=false
     
+    # Load colors for error messages
+    load_colors
+    
     while [[ $# -gt 0 ]]; do
         case $1 in
-            new|fork|config|setup|version|help)
+            new|fork|config|status|setup|version|help)
                 COMMAND=$1
                 shift
                 ;;
@@ -533,91 +565,84 @@ EOF
     chmod +x "$repo_dir/scripts/sync.sh"
 }
 
-# Create a new repository
-cmd_new() {
-    local repo_name="$REPO_NAME"
-    local app_type=""
-    local app_subtype=""
+# Launch editor if available
+launch_editor() {
+    local repo_dir="$1"
     
-    # Interactive mode if name not provided
-    if [[ -z "$repo_name" ]]; then
-        # In dry-run mode, we need a name
-        if [[ "$DRY_RUN" == "true" ]]; then
-            error "New command requires --name parameter"
-            exit 1
-        fi
-        echo -e "${BOLD}Create New Repository${NC}\n"
-        read -p "Repository name: " repo_name
-    fi
-    
-    # Validate name
-    if ! validate_repo_name "$repo_name"; then
-        error "Invalid repository name. Use only letters, numbers, dots, hyphens, and underscores."
-        exit 1
-    fi
-    
-    # Ask for application type (only in interactive mode)
-    if [[ "$DRY_RUN" != "true" ]]; then
+    if command_exists cursor; then
         echo
-        echo -e "${BOLD}Select Application Type:${NC}"
-        echo "  1) Web Applications"
-        echo "  2) Mobile Applications"
-        echo "  3) Desktop Applications"
-        echo "  4) Command Line Applications"
-        echo "  5) API/Backend Services"
-        echo "  6) Game Development"
-        echo "  7) Embedded/IoT Applications"
-        echo "  8) Browser Extensions"
-        echo "  9) AI/ML Applications"
-        echo " 10) Specialized Applications"
-        read -p "Choice (1-10): " app_choice
-        
-        case "$app_choice" in
-            1) app_type="Web Applications" ;;
-            2) app_type="Mobile Applications" ;;
-            3) app_type="Desktop Applications" ;;
-            4) app_type="Command Line Applications" ;;
-            5) app_type="API/Backend Services" ;;
-            6) app_type="Game Development" ;;
-            7) app_type="Embedded/IoT Applications" ;;
-            8) app_type="Browser Extensions" ;;
-            9) app_type="AI/ML Applications" ;;
-            10) app_type="Specialized Applications" ;;
-            *) app_type="General Application" ;;
-        esac
-        
-        # Get subtype based on type
-        app_subtype=$(get_app_subtype "$app_type")
+        info "Launching Cursor..."
+        cursor "$repo_dir" &
+    elif command_exists code; then
+        echo
+        info "Launching VS Code..."
+        code "$repo_dir" &
+    fi
+}
+
+# Setup git remotes and push initial commit
+setup_and_push_remotes() {
+    local repo_name="$1"
+    
+    step "Setting up remotes"
+    
+    if [[ -n "$GIT_PRIMARY_PREFIX" ]]; then
+        local primary_url="${GIT_PRIMARY_PREFIX}${GIT_PRIMARY_USER}/${repo_name}.git"
+        setup_remote "origin" "$primary_url"
+        info "Primary remote: $primary_url"
     fi
     
-    # If dry-run, just validate and exit
-    if [[ "$DRY_RUN" == "true" ]]; then
-        success "Validation passed for repository name: $repo_name"
-        exit 0
+    if [[ -n "$GIT_SECONDARY_PREFIX" ]]; then
+        local secondary_url="${GIT_SECONDARY_PREFIX}${GIT_SECONDARY_USER}/${repo_name}.git"
+        setup_remote "secondary" "$secondary_url"
+        info "Secondary remote: $secondary_url"
     fi
     
-    local repo_dir="$WORK_DIR/$repo_name"
-    
-    # Check if already exists
-    if [[ -d "$repo_dir" ]]; then
-        error "Directory $repo_dir already exists!"
-        exit 1
+    # Try to push
+    if [[ -n "$GIT_PRIMARY_PREFIX" ]]; then
+        step "Pushing to remotes"
+        if git push -u origin "$DEFAULT_BRANCH" 2>&1; then
+            success "Pushed to origin"
+        else
+            warning "Push to origin failed (this is normal if auto-create is disabled on your git server)"
+        fi
     fi
+}
+
+# Create MIT LICENSE file
+create_mit_license() {
+    local repo_dir="$1"
     
-    # Create repository
-    step "Creating repository at $repo_dir"
-    mkdir -p "$repo_dir"
+    cat > "$repo_dir/LICENSE" << EOF
+MIT License
+
+Copyright (c) $(date +%Y) $GIT_PRIMARY_USER
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+EOF
+}
+
+# Create .gitignore file with common and template-specific patterns
+create_gitignore() {
+    local repo_dir="$1"
+    
     cd "$repo_dir"
-    
-    git init -b "$DEFAULT_BRANCH"
-    
-    # Create initial files
-    step "Creating initial files"
-    
-    # Use copy_template_files to create README.md with app type info
-    copy_template_files "$repo_dir" "$repo_name" "$app_type" "$app_subtype"
-    
-    # Create .gitignore
     touch .gitignore
     
     # Add common patterns
@@ -660,31 +685,107 @@ EOF
             esac
         done
     fi
+}
+
+# Select application type interactively
+select_application_type() {
+    echo
+    echo -e "${BOLD}Select Application Type:${NC}"
+    echo "  1) Web Applications"
+    echo "  2) Mobile Applications"
+    echo "  3) Desktop Applications"
+    echo "  4) Command Line Applications"
+    echo "  5) API/Backend Services"
+    echo "  6) Game Development"
+    echo "  7) Embedded/IoT Applications"
+    echo "  8) Browser Extensions"
+    echo "  9) AI/ML Applications"
+    echo " 10) Specialized Applications"
+    read -p "Choice (1-10): " app_choice
+    
+    case "$app_choice" in
+        1) SELECTED_APP_TYPE="Web Applications" ;;
+        2) SELECTED_APP_TYPE="Mobile Applications" ;;
+        3) SELECTED_APP_TYPE="Desktop Applications" ;;
+        4) SELECTED_APP_TYPE="Command Line Applications" ;;
+        5) SELECTED_APP_TYPE="API/Backend Services" ;;
+        6) SELECTED_APP_TYPE="Game Development" ;;
+        7) SELECTED_APP_TYPE="Embedded/IoT Applications" ;;
+        8) SELECTED_APP_TYPE="Browser Extensions" ;;
+        9) SELECTED_APP_TYPE="AI/ML Applications" ;;
+        10) SELECTED_APP_TYPE="Specialized Applications" ;;
+        *) SELECTED_APP_TYPE="General Application" ;;
+    esac
+    
+    # Get subtype based on type
+    SELECTED_APP_SUBTYPE=$(get_app_subtype "$SELECTED_APP_TYPE")
+}
+
+# Create a new repository
+cmd_new() {
+    load_colors
+    load_git_utils
+    
+    local repo_name="$REPO_NAME"
+    local app_type=""
+    local app_subtype=""
+    
+    # Interactive mode if name not provided
+    if [[ -z "$repo_name" ]]; then
+        # In dry-run mode, we need a name
+        if [[ "$DRY_RUN" == "true" ]]; then
+            error "New command requires --name parameter"
+            exit 1
+        fi
+        echo -e "${BOLD}Create New Repository${NC}\n"
+        read -p "Repository name: " repo_name
+    fi
+    
+    # Validate name
+    if ! validate_repo_name "$repo_name"; then
+        error "Invalid repository name. Use only letters, numbers, dots, hyphens, and underscores."
+        exit 1
+    fi
+    
+    # Ask for application type (only in interactive mode)
+    if [[ "$DRY_RUN" != "true" ]]; then
+        select_application_type
+        app_type="$SELECTED_APP_TYPE"
+        app_subtype="$SELECTED_APP_SUBTYPE"
+    fi
+    
+    # If dry-run, just validate and exit
+    if [[ "$DRY_RUN" == "true" ]]; then
+        success "Validation passed for repository name: $repo_name"
+        exit 0
+    fi
+    
+    local repo_dir="$WORK_DIR/$repo_name"
+    
+    # Check if already exists
+    if [[ -d "$repo_dir" ]]; then
+        error "Directory $repo_dir already exists!"
+        exit 1
+    fi
+    
+    # Create repository
+    step "Creating repository at $repo_dir"
+    mkdir -p "$repo_dir"
+    cd "$repo_dir"
+    
+    git init -b "$DEFAULT_BRANCH"
+    
+    # Create initial files
+    step "Creating initial files"
+    
+    # Use copy_template_files to create README.md with app type info
+    copy_template_files "$repo_dir" "$repo_name" "$app_type" "$app_subtype"
+    
+    # Create .gitignore
+    create_gitignore "$repo_dir"
     
     # Create LICENSE
-    cat > LICENSE << EOF
-MIT License
-
-Copyright (c) $(date +%Y) $GIT_PRIMARY_USER
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-EOF
+    create_mit_license "$repo_dir"
     
     # Create VS Code integration
     create_vscode_integration "$repo_dir"
@@ -699,30 +800,8 @@ EOF
     git add .
     git commit -m "Initial commit"
     
-    # Setup remotes
-    step "Setting up remotes"
-    
-    if [[ -n "$GIT_PRIMARY_PREFIX" ]]; then
-        local primary_url="${GIT_PRIMARY_PREFIX}${GIT_PRIMARY_USER}/${repo_name}.git"
-        setup_remote "origin" "$primary_url"
-        info "Primary remote: $primary_url"
-    fi
-    
-    if [[ -n "$GIT_SECONDARY_PREFIX" ]]; then
-        local secondary_url="${GIT_SECONDARY_PREFIX}${GIT_SECONDARY_USER}/${repo_name}.git"
-        setup_remote "secondary" "$secondary_url"
-        info "Secondary remote: $secondary_url"
-    fi
-    
-    # Try to push
-    if [[ -n "$GIT_PRIMARY_PREFIX" ]]; then
-        step "Pushing to remotes"
-        if git push -u origin "$DEFAULT_BRANCH" 2>&1; then
-            success "Pushed to origin"
-        else
-            warning "Push to origin failed (this is normal if auto-create is disabled on your git server)"
-        fi
-    fi
+    # Setup remotes and push
+    setup_and_push_remotes "$repo_name"
     
     success "Repository created successfully!"
     echo
@@ -732,19 +811,14 @@ EOF
     echo "  ./scripts/sync.sh  # or Ctrl+Shift+B in VS Code"
     
     # Launch editor if available
-    if command_exists cursor; then
-        echo
-        info "Launching Cursor..."
-        cursor "$repo_dir" &
-    elif command_exists code; then
-        echo
-        info "Launching VS Code..."
-        code "$repo_dir" &
-    fi
+    launch_editor "$repo_dir"
 }
 
 # Fork a repository
 cmd_fork() {
+    load_colors
+    load_git_utils
+    
     local repo_url="$REPO_URL"
     
     # Interactive mode if URL not provided
@@ -844,19 +918,12 @@ cmd_fork() {
     echo "  ./scripts/sync.sh  # Sync with upstream and your remotes"
     
     # Launch editor if available
-    if command_exists cursor; then
-        echo
-        info "Launching Cursor..."
-        cursor "$repo_dir" &
-    elif command_exists code; then
-        echo
-        info "Launching VS Code..."
-        code "$repo_dir" &
-    fi
+    launch_editor "$repo_dir"
 }
 
 # Edit configuration
 cmd_config() {
+    load_colors
     # Create config directory if needed
     mkdir -p "$CONFIG_DIR"
     
@@ -878,13 +945,78 @@ cmd_config() {
     fi
 }
 
+# Show repository status across remotes
+cmd_status() {
+    load_colors
+    load_git_utils
+    
+    # Check if we're in a git repository
+    if ! is_git_repo; then
+        error "Not in a git repository"
+        exit 1
+    fi
+    
+    echo -e "${BOLD}Git-Go Repository Status${NC}\n"
+    
+    # Current branch
+    local current_branch=$(get_current_branch)
+    echo -e "${CYAN}Current Branch:${NC} $current_branch"
+    echo
+    
+    # Check each remote
+    local remotes=$(git remote)
+    if [[ -z "$remotes" ]]; then
+        warning "No remotes configured"
+        return
+    fi
+    
+    for remote in $remotes; do
+        echo -e "${BOLD}Remote: $remote${NC}"
+        local url=$(git remote get-url "$remote" 2>/dev/null)
+        echo -e "  ${BLUE}URL:${NC} $url"
+        
+        # Fetch latest info
+        git fetch "$remote" --quiet 2>/dev/null || {
+            warning "  Failed to fetch from $remote"
+            continue
+        }
+        
+        # Check if we're ahead/behind
+        local ahead=$(git rev-list --count "$remote/$current_branch".."$current_branch" 2>/dev/null || echo "0")
+        local behind=$(git rev-list --count "$current_branch".."$remote/$current_branch" 2>/dev/null || echo "0")
+        
+        if [[ "$ahead" -gt 0 && "$behind" -gt 0 ]]; then
+            warning "  Diverged: $ahead ahead, $behind behind"
+        elif [[ "$ahead" -gt 0 ]]; then
+            info "  Ahead by $ahead commit(s)"
+        elif [[ "$behind" -gt 0 ]]; then
+            warning "  Behind by $behind commit(s)"
+        else
+            success "  Up to date"
+        fi
+        echo
+    done
+    
+    # Local changes
+    echo -e "${BOLD}Local Changes:${NC}"
+    local changes=$(git status --porcelain)
+    if [[ -z "$changes" ]]; then
+        success "Working directory clean"
+    else
+        warning "Uncommitted changes:"
+        git status --short
+    fi
+}
+
 # Show version
 cmd_version() {
+    load_colors
     echo "Git-Go v${VERSION}"
 }
 
 # Setup wizard for first-time configuration
 setup_wizard() {
+    load_colors
     echo -e "${BOLD}Git-Go Setup Wizard${NC}\n"
     echo "Let's configure Git-Go for your environment."
     echo
@@ -1012,15 +1144,18 @@ show_menu() {
             COMMAND="config"
             ;;
         4)
-            COMMAND="setup"
+            COMMAND="status"
             ;;
         5)
-            COMMAND="version"
+            COMMAND="setup"
             ;;
         6)
-            COMMAND="help"
+            COMMAND="version"
             ;;
         7)
+            COMMAND="help"
+            ;;
+        8)
             echo "Goodbye!"
             exit 0
             ;;
@@ -1068,6 +1203,9 @@ main() {
             ;;
         config)
             cmd_config
+            ;;
+        status)
+            cmd_status
             ;;
         setup)
             setup_wizard
