@@ -22,7 +22,7 @@ CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/git-go"
 CONFIG_FILE="$CONFIG_DIR/config"
 
 # Version
-VERSION="1.0.9"
+VERSION="1.1.0"
 
 # Library loading flags
 COLORS_LOADED=false
@@ -75,6 +75,11 @@ load_config() {
     ENABLE_CLAUDE_MD=true
     DEFAULT_GITIGNORE_TEMPLATES="node,python"
     USE_COLORS=true
+    
+    # Repo snippets configuration
+    REPO_SNIPPETS_LOCAL="$HOME/src/repo-snippets"
+    REPO_SNIPPETS_REMOTE="https://github.com/PowerAppsDarren/repo-snippets.git"
+    ENABLE_REPO_SNIPPETS=true
     
     # Load user config if exists
     if [[ -f "$CONFIG_FILE" ]]; then
@@ -633,28 +638,16 @@ launch_editor() {
     
     if cached_command_exists cursor; then
         echo
-        info "Launching Cursor with claudia..."
-        # Create a temporary script to run claudia after terminal opens
-        local temp_script=$(mktemp)
-        cat > "$temp_script" << 'EOF'
-#!/bin/bash
-cd "$(dirname "$0")"
-# Give terminal time to initialize
-sleep 0.5
-# Run claudia
-claudia
-# Keep terminal open
-exec bash
-EOF
-        chmod +x "$temp_script"
+        info "Launching Cursor..."
+        # Simply open Cursor in the new project directory
+        cursor "$repo_dir" &
         
-        # Launch cursor with terminal running claudia
-        cursor "$repo_dir" --new-window --goto "$repo_dir" --command "workbench.action.terminal.new" &
-        sleep 1
-        # Send command to run claudia in the terminal
-        cursor --goto "$repo_dir" --command "workbench.action.terminal.sendSequence" --args '{"text":"claudia\n"}' &
-        
-        rm -f "$temp_script"
+        # Note: Cursor doesn't support CLI commands to open terminal or run commands
+        # User will need to manually open terminal and run claudia
+        echo
+        info "After Cursor opens, you can:"
+        echo "  1. Open terminal with Ctrl+\` (backtick)"
+        echo "  2. Run 'claudia' to start Claude"
     elif cached_command_exists code; then
         echo
         info "Launching VS Code..."
@@ -767,6 +760,82 @@ EOF
             esac
         done
     fi
+}
+
+# Copy template files from repo-snippets
+copy_repo_snippets() {
+    local repo_dir=$1
+    local repo_name=$2
+    
+    if [[ "$ENABLE_REPO_SNIPPETS" != "true" ]]; then
+        return
+    fi
+    
+    local snippets_dir=""
+    
+    # Check if local repo-snippets exists
+    if [[ -d "$REPO_SNIPPETS_LOCAL" ]]; then
+        snippets_dir="$REPO_SNIPPETS_LOCAL"
+        info "Using local repo-snippets from $snippets_dir"
+    elif [[ -n "$REPO_SNIPPETS_REMOTE" ]]; then
+        # Clone to temp directory if remote is configured
+        snippets_dir="/tmp/repo-snippets-$$"
+        info "Cloning repo-snippets from remote..."
+        if git clone --quiet --depth 1 "$REPO_SNIPPETS_REMOTE" "$snippets_dir" 2>/dev/null; then
+            info "Successfully cloned repo-snippets"
+        else
+            warning "Failed to clone repo-snippets from $REPO_SNIPPETS_REMOTE"
+            return
+        fi
+    else
+        warning "No repo-snippets source configured"
+        return
+    fi
+    
+    # Copy template files
+    step "Copying template files from repo-snippets"
+    
+    # Copy ai-chats directory structure
+    if [[ -d "$snippets_dir/ai-chats" ]]; then
+        cp -r "$snippets_dir/ai-chats" "$repo_dir/"
+        # Clear out example session files but keep the structure
+        find "$repo_dir/ai-chats" -name "2025-*.md" -delete 2>/dev/null || true
+        info "Copied ai-chats documentation structure"
+    fi
+    
+    # Copy dev-knowledge directory
+    if [[ -d "$snippets_dir/dev-knowledge" ]]; then
+        cp -r "$snippets_dir/dev-knowledge" "$repo_dir/"
+        info "Copied dev-knowledge directory"
+    fi
+    
+    # Copy enhanced scripts (overwriting the basic ones)
+    if [[ -f "$snippets_dir/scripts/sync.sh" ]]; then
+        cp "$snippets_dir/scripts/sync.sh" "$repo_dir/scripts/sync.sh"
+        chmod +x "$repo_dir/scripts/sync.sh"
+        info "Copied enhanced sync.sh script"
+    fi
+    
+    if [[ -f "$snippets_dir/scripts/pushall.sh" ]]; then
+        cp "$snippets_dir/scripts/pushall.sh" "$repo_dir/scripts/"
+        chmod +x "$repo_dir/scripts/pushall.sh"
+        info "Copied pushall.sh script"
+    fi
+    
+    # Copy CLAUDE.md if it exists (will be merged with generated one)
+    if [[ -f "$snippets_dir/CLAUDE.md" ]] && [[ -f "$repo_dir/CLAUDE.md" ]]; then
+        # Append repo-snippets CLAUDE.md content to the generated one
+        echo -e "\n\n# Additional Instructions from repo-snippets\n" >> "$repo_dir/CLAUDE.md"
+        cat "$snippets_dir/CLAUDE.md" >> "$repo_dir/CLAUDE.md"
+        info "Merged CLAUDE.md instructions"
+    fi
+    
+    # Clean up temp directory if we cloned
+    if [[ "$snippets_dir" == "/tmp/repo-snippets-"* ]]; then
+        rm -rf "$snippets_dir"
+    fi
+    
+    success "Template files copied from repo-snippets"
 }
 
 # Select application type interactively
@@ -894,6 +963,9 @@ cmd_new() {
     
     # Create sync script
     create_sync_script "$repo_dir" "$repo_name" "false"
+    
+    # Copy template files from repo-snippets
+    copy_repo_snippets "$repo_dir" "$repo_name"
     
     # Initial commit
     git add .
@@ -1184,6 +1256,16 @@ setup_wizard() {
     read -p "Create CLAUDE.md files for AI assistance? (y/n) [y]: " claude
     ENABLE_CLAUDE="${claude:-y}"
     
+    read -p "Use repo-snippets for template files? (y/n) [y]: " snippets
+    ENABLE_SNIPPETS="${snippets:-y}"
+    
+    if [[ "$ENABLE_SNIPPETS" == "y" ]]; then
+        read -p "Local repo-snippets path [$HOME/src/repo-snippets]: " local_path
+        SNIPPETS_LOCAL="${local_path:-$HOME/src/repo-snippets}"
+        read -p "Remote repo-snippets URL [https://github.com/PowerAppsDarren/repo-snippets.git]: " remote_url
+        SNIPPETS_REMOTE="${remote_url:-https://github.com/PowerAppsDarren/repo-snippets.git}"
+    fi
+    
     # Create config
     mkdir -p "$CONFIG_DIR"
     cat > "$CONFIG_FILE" << EOF
@@ -1209,6 +1291,11 @@ ENABLE_CLAUDE_MD=$([ "$ENABLE_CLAUDE" = "y" ] && echo "true" || echo "false")
 
 # Default templates
 DEFAULT_GITIGNORE_TEMPLATES="node,python"
+
+# Repo snippets
+ENABLE_REPO_SNIPPETS=$([ "$ENABLE_SNIPPETS" = "y" ] && echo "true" || echo "false")
+REPO_SNIPPETS_LOCAL="${SNIPPETS_LOCAL:-$HOME/src/repo-snippets}"
+REPO_SNIPPETS_REMOTE="${SNIPPETS_REMOTE:-https://github.com/PowerAppsDarren/repo-snippets.git}"
 
 # Colors
 USE_COLORS=true

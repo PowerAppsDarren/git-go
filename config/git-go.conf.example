@@ -29,5 +29,13 @@ ENABLE_CLAUDE_MD=true
 # Options: node, python, go, rust, java, ruby, php
 DEFAULT_GITIGNORE_TEMPLATES="node,python"
 
+# Repo snippets - copy template files from a snippets repository
+# Set to false to disable this feature
+ENABLE_REPO_SNIPPETS=true
+# Local path to repo-snippets (will use this if it exists)
+REPO_SNIPPETS_LOCAL="$HOME/src/repo-snippets"
+# Remote URL to clone from if local doesn't exist
+REPO_SNIPPETS_REMOTE="https://github.com/PowerAppsDarren/repo-snippets.git"
+
 # Colors (set to false to disable colored output)
 USE_COLORS=true
