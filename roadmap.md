@@ -19,12 +19,19 @@ Git-Go is a professional Git repository initialization and management tool that 
 - [x] Upstream tracking for forks
 - [x] CLAUDE.md generation for AI assistance
 
-### Template System (Latest Feature)
+### Template System
 - [x] Automatic template copying from repo-snippets
 - [x] AI chat documentation templates
 - [x] Custom README.md with checklist items
 - [x] Project roadmap.md template
 - [x] Preservation of .vscode and scripts directories
+
+### User Configuration Copying (Latest Feature - v1.1.0)
+- [x] Copy VS Code configuration files to new repositories
+- [x] Copy Cursor configuration files to new repositories  
+- [x] Copy Claude Code configuration files to new repositories
+- [x] Smart tasks.json merging to preserve git-go sync task
+- [x] Configurable copying options (can be disabled per type)
 
 ### Testing & Quality
 - [x] Comprehensive test suite

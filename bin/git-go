@@ -75,19 +75,25 @@ load_config() {
     ENABLE_CLAUDE_MD=true
     DEFAULT_GITIGNORE_TEMPLATES="node,python"
     USE_COLORS=true
+    DEFAULT_PARENT_DIR="$HOME/src"
     
     # Repo snippets configuration
     REPO_SNIPPETS_LOCAL="$HOME/src/repo-snippets"
     REPO_SNIPPETS_REMOTE="https://github.com/PowerAppsDarren/repo-snippets.git"
     ENABLE_REPO_SNIPPETS=true
     
+    # User config copying
+    COPY_VSCODE_CONFIG=true
+    COPY_CURSOR_CONFIG=true
+    COPY_CLAUDE_CONFIG=true
+    
     # Load user config if exists
     if [[ -f "$CONFIG_FILE" ]]; then
         source "$CONFIG_FILE"
     fi
     
-    # Set working directory
-    WORK_DIR="${WORK_DIR:-$HOME/src}"
+    # Set working directory (can be overridden by -d flag or DEFAULT_PARENT_DIR config)
+    WORK_DIR="${WORK_DIR:-${DEFAULT_PARENT_DIR:-$HOME/src}}"
     
     # Mark as loaded
     CONFIG_LOADED=true
@@ -840,6 +846,97 @@ copy_repo_snippets() {
     success "Template files copied from repo-snippets"
 }
 
+# Copy user configuration files from home directory
+copy_user_configs() {
+    local repo_dir=$1
+    
+    step "Copying user configuration files"
+    
+    # Copy VS Code config if enabled and exists
+    if [[ "$COPY_VSCODE_CONFIG" == "true" ]] && [[ -d "$HOME/.vscode" ]]; then
+        info "Copying VS Code configuration..."
+        
+        # Copy settings.json, keybindings.json, extensions.json
+        for config_file in settings.json keybindings.json extensions.json; do
+            if [[ -f "$HOME/.vscode/$config_file" ]]; then
+                cp "$HOME/.vscode/$config_file" "$repo_dir/.vscode/" 2>/dev/null || warning "Could not copy .vscode/$config_file"
+            fi
+        done
+        
+        # Handle tasks.json specially - merge with existing git-go task
+        if [[ -f "$HOME/.vscode/tasks.json" ]]; then
+            merge_tasks_json "$HOME/.vscode/tasks.json" "$repo_dir/.vscode/tasks.json"
+        fi
+    fi
+    
+    # Copy Cursor config if enabled and exists
+    if [[ "$COPY_CURSOR_CONFIG" == "true" ]] && [[ -d "$HOME/.cursor" ]]; then
+        info "Copying Cursor configuration..."
+        
+        # Create .cursor directory in repo
+        mkdir -p "$repo_dir/.cursor"
+        
+        # Copy settings.json, keybindings.json, extensions.json, mcp.json
+        for config_file in settings.json keybindings.json extensions.json mcp.json; do
+            if [[ -f "$HOME/.cursor/$config_file" ]]; then
+                cp "$HOME/.cursor/$config_file" "$repo_dir/.cursor/" 2>/dev/null || warning "Could not copy .cursor/$config_file"
+            fi
+        done
+        
+        # Handle tasks.json specially - merge with user cursor tasks
+        if [[ -f "$HOME/.cursor/tasks.json" ]]; then
+            cp "$HOME/.cursor/tasks.json" "$repo_dir/.cursor/tasks.json" 2>/dev/null || warning "Could not copy .cursor/tasks.json"
+        fi
+    fi
+    
+    # Copy Claude config if enabled and exists
+    if [[ "$COPY_CLAUDE_CONFIG" == "true" ]] && [[ -d "$HOME/.claude" ]]; then
+        info "Copying Claude Code configuration..."
+        
+        # Create .claude directory in repo and copy contents
+        if cp -r "$HOME/.claude" "$repo_dir/" 2>/dev/null; then
+            info "Copied .claude directory"
+        else
+            warning "Could not copy .claude directory"
+        fi
+    fi
+    
+    success "User configuration files copied"
+}
+
+# Merge tasks.json files to preserve git-go sync task while adding user tasks
+merge_tasks_json() {
+    local user_tasks_file="$1"
+    local repo_tasks_file="$2"
+    
+    # Check if jq is available for JSON manipulation
+    if ! command -v jq >/dev/null 2>&1; then
+        warning "jq not available, skipping tasks.json merge"
+        return
+    fi
+    
+    # Create a temporary merged file
+    local temp_file="/tmp/merged_tasks_$$.json"
+    
+    # Extract user tasks (excluding any existing "Git Sync" tasks)
+    local user_tasks=$(jq -r '.tasks[] | select(.label != "Git Sync")' "$user_tasks_file" 2>/dev/null)
+    
+    # If we have user tasks, merge them with the git-go task
+    if [[ -n "$user_tasks" && "$user_tasks" != "null" ]]; then
+        # Create merged JSON with git-go sync task first, then user tasks
+        jq --argjson user_tasks "$(jq '[.tasks[] | select(.label != "Git Sync")]' "$user_tasks_file" 2>/dev/null || echo '[]')" \
+           '.tasks = (.tasks + $user_tasks)' "$repo_tasks_file" > "$temp_file" 2>/dev/null
+        
+        if [[ -s "$temp_file" ]]; then
+            mv "$temp_file" "$repo_tasks_file"
+            info "Merged user tasks with git-go sync task"
+        else
+            warning "Failed to merge tasks.json files"
+            rm -f "$temp_file"
+        fi
+    fi
+}
+
 # Select application type interactively
 select_application_type() {
     echo
@@ -898,6 +995,7 @@ cmd_new() {
     local app_type=""
     local app_subtype=""
     local app_description=""
+    local parent_dir=""
     
     # Interactive mode if name not provided
     if [[ -z "$repo_name" ]]; then
@@ -922,6 +1020,31 @@ cmd_new() {
         app_type="$SELECTED_APP_TYPE"
         app_subtype="$SELECTED_APP_SUBTYPE"
         app_description="$SELECTED_APP_DESCRIPTION"
+        
+        # Ask for parent directory
+        echo
+        echo -e "${BOLD}Where should this repository be created?${NC}"
+        echo -e "Default parent directory: ${CYAN}$WORK_DIR${NC}"
+        read -p "Parent directory (press Enter to use default): " custom_parent
+        parent_dir="${custom_parent:-$WORK_DIR}"
+        
+        # Expand tilde if present
+        parent_dir="${parent_dir/#\~/$HOME}"
+        
+        # Create parent directory if it doesn't exist
+        if [[ ! -d "$parent_dir" ]]; then
+            echo -e "${YELLOW}Directory $parent_dir doesn't exist.${NC}"
+            read -p "Create it? (y/n) [y]: " create_dir
+            if [[ "${create_dir:-y}" =~ ^[Yy]$ ]]; then
+                mkdir -p "$parent_dir"
+                success "Created parent directory: $parent_dir"
+            else
+                error "Cannot proceed without parent directory"
+                exit 1
+            fi
+        fi
+    else
+        parent_dir="$WORK_DIR"
     fi
     
     # If dry-run, just validate and exit
@@ -930,7 +1053,7 @@ cmd_new() {
         exit 0
     fi
     
-    local repo_dir="$WORK_DIR/$repo_name"
+    local repo_dir="$parent_dir/$repo_name"
     
     # Check if already exists
     if [[ -d "$repo_dir" ]]; then
@@ -969,6 +1092,9 @@ cmd_new() {
     # Copy template files from repo-snippets
     copy_repo_snippets "$repo_dir" "$repo_name"
     
+    # Copy user configuration files
+    copy_user_configs "$repo_dir"
+    
     # Initial commit
     git add .
     git commit -m "Initial commit"
@@ -993,6 +1119,7 @@ cmd_fork() {
     load_git_utils
     
     local repo_url="$REPO_URL"
+    local parent_dir=""
     
     # Interactive mode if URL not provided
     if [[ -z "$repo_url" ]]; then
@@ -1032,7 +1159,34 @@ cmd_fork() {
         repo_name="$repo"
     fi
     
-    local repo_dir="$WORK_DIR/$repo_name"
+    # Ask for parent directory (only in interactive mode)
+    if [[ "$DRY_RUN" != "true" ]]; then
+        echo
+        echo -e "${BOLD}Where should this repository be cloned?${NC}"
+        echo -e "Default parent directory: ${CYAN}$WORK_DIR${NC}"
+        read -p "Parent directory (press Enter to use default): " custom_parent
+        parent_dir="${custom_parent:-$WORK_DIR}"
+        
+        # Expand tilde if present
+        parent_dir="${parent_dir/#\~/$HOME}"
+        
+        # Create parent directory if it doesn't exist
+        if [[ ! -d "$parent_dir" ]]; then
+            echo -e "${YELLOW}Directory $parent_dir doesn't exist.${NC}"
+            read -p "Create it? (y/n) [y]: " create_dir
+            if [[ "${create_dir:-y}" =~ ^[Yy]$ ]]; then
+                mkdir -p "$parent_dir"
+                success "Created parent directory: $parent_dir"
+            else
+                error "Cannot proceed without parent directory"
+                exit 1
+            fi
+        fi
+    else
+        parent_dir="$WORK_DIR"
+    fi
+    
+    local repo_dir="$parent_dir/$repo_name"
     
     # Check if already exists
     if [[ -d "$repo_dir" ]]; then
@@ -1072,6 +1226,9 @@ cmd_fork() {
     
     # Create sync script
     create_sync_script "$repo_dir" "$repo_name" "true"
+    
+    # Copy user configuration files
+    copy_user_configs "$repo_dir"
     
     # Try to push
     if [[ -n "$GIT_PRIMARY_PREFIX" ]]; then
@@ -1251,7 +1408,12 @@ setup_wizard() {
     
     # Other settings
     echo
-    echo -e "${YELLOW}2. Additional Settings${NC}"
+    echo -e "${YELLOW}2. Repository Settings${NC}"
+    read -p "Default parent directory for repositories [$HOME/src]: " parent_dir
+    DEFAULT_PARENT="${parent_dir:-$HOME/src}"
+    
+    echo
+    echo -e "${YELLOW}3. Additional Settings${NC}"
     read -p "Enable VS Code integration? (y/n) [y]: " vscode
     ENABLE_VSCODE="${vscode:-y}"
     
@@ -1286,6 +1448,9 @@ GIT_SECONDARY_PREFIX="$SECONDARY_PREFIX"
 
 # Default branch name
 DEFAULT_BRANCH="main"
+
+# Default parent directory for repositories
+DEFAULT_PARENT_DIR="$DEFAULT_PARENT"
 
 # Features
 ENABLE_VSCODE_INTEGRATION=$([ "$ENABLE_VSCODE" = "y" ] && echo "true" || echo "false")

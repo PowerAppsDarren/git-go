@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "*",
+      "Bash(~/.claude/commands/my-sanitize:*)"
+    ]
+  },
+  "defaultMode": "acceptEdits"
+}

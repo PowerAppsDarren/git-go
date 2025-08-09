@@ -37,5 +37,16 @@ REPO_SNIPPETS_LOCAL="$HOME/src/repo-snippets"
 # Remote URL to clone from if local doesn't exist
 REPO_SNIPPETS_REMOTE="https://github.com/PowerAppsDarren/repo-snippets.git"
 
+# Copy user configuration files to new repositories
+# This copies your VS Code, Cursor, and Claude settings to each new repo
+COPY_VSCODE_CONFIG=true
+COPY_CURSOR_CONFIG=true
+COPY_CLAUDE_CONFIG=true
+
+# Default parent directory for new/forked repositories
+# This is where git-go will create new repositories
+# User will be prompted to confirm or change this location
+DEFAULT_PARENT_DIR="$HOME/src"
+
 # Colors (set to false to disable colored output)
 USE_COLORS=true
