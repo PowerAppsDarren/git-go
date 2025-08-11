@@ -31,26 +31,23 @@ PERF_UTILS_LOADED=false
 
 # Lazy load color library
 load_colors() {
-    if [[ "$COLORS_LOADED" != "true" ]]; then
-        source "$LIB_DIR/colors.sh"
-        COLORS_LOADED=true
-    fi
+    [[ "$COLORS_LOADED" == "true" ]] && return
+    source "$LIB_DIR/colors.sh"
+    COLORS_LOADED=true
 }
 
 # Lazy load git utils
 load_git_utils() {
-    if [[ "$GIT_UTILS_LOADED" != "true" ]]; then
-        source "$LIB_DIR/git-utils.sh"
-        GIT_UTILS_LOADED=true
-    fi
+    [[ "$GIT_UTILS_LOADED" == "true" ]] && return
+    source "$LIB_DIR/git-utils.sh"
+    GIT_UTILS_LOADED=true
 }
 
 # Lazy load performance utils
 load_perf_utils() {
-    if [[ "$PERF_UTILS_LOADED" != "true" ]]; then
-        source "$LIB_DIR/performance-utils.sh"
-        PERF_UTILS_LOADED=true
-    fi
+    [[ "$PERF_UTILS_LOADED" == "true" ]] && return
+    source "$LIB_DIR/performance-utils.sh"
+    PERF_UTILS_LOADED=true
 }
 
 # Configuration cache
@@ -59,9 +56,7 @@ CONFIG_LOADED=false
 # Load configuration
 load_config() {
     # Skip if already loaded
-    if [[ "$CONFIG_LOADED" == "true" ]]; then
-        return
-    fi
+    [[ "$CONFIG_LOADED" == "true" ]] && return
     
     # Default configuration
     GIT_PRIMARY_HOST="github.com"
@@ -88,9 +83,7 @@ load_config() {
     COPY_CLAUDE_CONFIG=true
     
     # Load user config if exists
-    if [[ -f "$CONFIG_FILE" ]]; then
-        source "$CONFIG_FILE"
-    fi
+    [[ -f "$CONFIG_FILE" ]] && source "$CONFIG_FILE"
     
     # Set working directory (can be overridden by -d flag or DEFAULT_PARENT_DIR config)
     WORK_DIR="${WORK_DIR:-${DEFAULT_PARENT_DIR:-$HOME/src}}"
@@ -110,6 +103,7 @@ ${BOLD}USAGE:${NC}
 ${BOLD}COMMANDS:${NC}
     new              Create a new repository
     fork             Fork an existing repository
+    clone            Clone an existing repository
     config           Edit configuration
     status           Show repository sync status
     setup            Run setup wizard
@@ -126,6 +120,7 @@ ${BOLD}OPTIONS:${NC}
 ${BOLD}EXAMPLES:${NC}
     git-go new --name my-project
     git-go fork --url https://github.com/user/repo
+    git-go clone --url https://github.com/user/repo
     git-go config"
 }
 
@@ -141,7 +136,7 @@ parse_args() {
     
     while [[ $# -gt 0 ]]; do
         case $1 in
-            new|fork|config|status|setup|version|help)
+            new|fork|clone|config|status|setup|version|help)
                 COMMAND=$1
                 shift
                 ;;
@@ -180,9 +175,7 @@ parse_args() {
 create_vscode_integration() {
     local repo_dir=$1
     
-    if [[ "$ENABLE_VSCODE_INTEGRATION" != "true" ]]; then
-        return
-    fi
+    [[ "$ENABLE_VSCODE_INTEGRATION" != "true" ]] && return
     
     mkdir -p "$repo_dir/.vscode"
     
@@ -216,23 +209,26 @@ get_app_subtype() {
     
     case "$app_type" in
         "Web Applications")
-            echo -e "\n${BOLD}Select Web Application Subtype:${NC}" >&2
-            echo "  1) Static Sites (marketing pages, portfolios, documentation)" >&2
-            echo "  2) Single Page Apps/SPAs (Gmail, Twitter, Spotify Web)" >&2
-            echo "  3) Progressive Web Apps/PWAs (installable web apps with offline support)" >&2
-            echo "  4) Server-Side Rendered/SSR (e-commerce, blogs, news sites)" >&2
-            echo "  5) Jamstack Sites (static + APIs, Gatsby, Astro sites)" >&2
-            echo "  6) Web-Based SaaS (Stripe Dashboard, Notion, Linear)" >&2
-            echo "  7) Enterprise Web Apps (CRMs, ERPs, internal tools)" >&2
-            echo "  8) E-commerce Platforms (Shopify stores, marketplaces)" >&2
-            echo "  9) Social Networks (forums, communities, dating apps)" >&2
-            echo " 10) Content Management Systems (WordPress, Ghost, Strapi)" >&2
-            echo " 11) Learning Management Systems (course platforms, online schools)" >&2
-            echo " 12) Real-time Collaboration (Google Docs, Figma, Miro)" >&2
-            echo " 13) Dashboards/Analytics (admin panels, BI tools)" >&2
-            echo " 14) Streaming Platforms (YouTube, Netflix web versions)" >&2
-            echo " 15) Electron Apps (Web tech as desktop: VS Code, Discord)" >&2
-            echo " 16) Other" >&2
+            cat >&2 <<EOF
+
+${BOLD}Select Web Application Subtype:${NC}
+  1) Static Sites (marketing pages, portfolios, documentation)
+  2) Single Page Apps/SPAs (Gmail, Twitter, Spotify Web)
+  3) Progressive Web Apps/PWAs (installable web apps with offline support)
+  4) Server-Side Rendered/SSR (e-commerce, blogs, news sites)
+  5) Jamstack Sites (static + APIs, Gatsby, Astro sites)
+  6) Web-Based SaaS (Stripe Dashboard, Notion, Linear)
+  7) Enterprise Web Apps (CRMs, ERPs, internal tools)
+  8) E-commerce Platforms (Shopify stores, marketplaces)
+  9) Social Networks (forums, communities, dating apps)
+ 10) Content Management Systems (WordPress, Ghost, Strapi)
+ 11) Learning Management Systems (course platforms, online schools)
+ 12) Real-time Collaboration (Google Docs, Figma, Miro)
+ 13) Dashboards/Analytics (admin panels, BI tools)
+ 14) Streaming Platforms (YouTube, Netflix web versions)
+ 15) Electron Apps (Web tech as desktop: VS Code, Discord)
+ 16) Other
+EOF
             read -p "Choice (1-16): " choice >&2
             case "$choice" in
                 1) subtype="Static Sites" ;;
@@ -258,13 +254,16 @@ get_app_subtype() {
             esac
             ;;
         "Mobile Applications")
-            echo -e "\n${BOLD}Select Mobile Application Subtype:${NC}" >&2
-            echo "  1) Native iOS (Swift/SwiftUI apps)" >&2
-            echo "  2) Native Android (Kotlin/Java apps)" >&2
-            echo "  3) Cross-Platform Mobile (React Native, Flutter, Ionic)" >&2
-            echo "  4) Hybrid Apps (Capacitor, Cordova - web wrapped as mobile)" >&2
-            echo "  5) Mobile Games (Unity, native game engines)" >&2
-            echo "  6) Other" >&2
+            cat >&2 <<EOF
+
+${BOLD}Select Mobile Application Subtype:${NC}
+  1) Native iOS (Swift/SwiftUI apps)
+  2) Native Android (Kotlin/Java apps)
+  3) Cross-Platform Mobile (React Native, Flutter, Ionic)
+  4) Hybrid Apps (Capacitor, Cordova - web wrapped as mobile)
+  5) Mobile Games (Unity, native game engines)
+  6) Other
+EOF
             read -p "Choice (1-6): " choice >&2
             case "$choice" in
                 1) subtype="Native iOS" ;;
@@ -280,13 +279,16 @@ get_app_subtype() {
             esac
             ;;
         "Desktop Applications")
-            echo -e "\n${BOLD}Select Desktop Application Subtype:${NC}" >&2
-            echo "  1) Electron Apps (VS Code, Discord, Slack)" >&2
-            echo "  2) Native Windows (WPF, WinForms, UWP apps)" >&2
-            echo "  3) Native macOS (Swift/AppKit apps)" >&2
-            echo "  4) Native Linux (GTK, Qt applications)" >&2
-            echo "  5) Cross-Platform Native (Tauri, Qt, JavaFX)" >&2
-            echo "  6) Other" >&2
+            cat >&2 <<EOF
+
+${BOLD}Select Desktop Application Subtype:${NC}
+  1) Electron Apps (VS Code, Discord, Slack)
+  2) Native Windows (WPF, WinForms, UWP apps)
+  3) Native macOS (Swift/AppKit apps)
+  4) Native Linux (GTK, Qt applications)
+  5) Cross-Platform Native (Tauri, Qt, JavaFX)
+  6) Other
+EOF
             read -p "Choice (1-6): " choice >&2
             case "$choice" in
                 1) subtype="Electron Apps" ;;
@@ -302,12 +304,15 @@ get_app_subtype() {
             esac
             ;;
         "Command Line Applications")
-            echo -e "\n${BOLD}Select Command Line Application Subtype:${NC}" >&2
-            echo "  1) CLI Tools (Git, npm, development tools)" >&2
-            echo "  2) Terminal UIs/TUIs (htop, vim, terminal dashboards)" >&2
-            echo "  3) Build Tools (Webpack, Vite, bundlers)" >&2
-            echo "  4) Automation Scripts (Python/Bash/Node scripts)" >&2
-            echo "  5) Other" >&2
+            cat >&2 <<EOF
+
+${BOLD}Select Command Line Application Subtype:${NC}
+  1) CLI Tools (Git, npm, development tools)
+  2) Terminal UIs/TUIs (htop, vim, terminal dashboards)
+  3) Build Tools (Webpack, Vite, bundlers)
+  4) Automation Scripts (Python/Bash/Node scripts)
+  5) Other
+EOF
             read -p "Choice (1-5): " choice >&2
             case "$choice" in
                 1) subtype="CLI Tools" ;;
@@ -322,14 +327,17 @@ get_app_subtype() {
             esac
             ;;
         "API/Backend Services")
-            echo -e "\n${BOLD}Select API/Backend Service Subtype:${NC}" >&2
-            echo "  1) REST APIs (traditional HTTP services)" >&2
-            echo "  2) GraphQL APIs (flexible query services)" >&2
-            echo "  3) Microservices (distributed service architectures)" >&2
-            echo "  4) Serverless Functions (Lambda, Vercel Functions)" >&2
-            echo "  5) WebSocket Services (real-time communication)" >&2
-            echo "  6) gRPC Services (high-performance RPC)" >&2
-            echo "  7) Other" >&2
+            cat >&2 <<EOF
+
+${BOLD}Select API/Backend Service Subtype:${NC}
+  1) REST APIs (traditional HTTP services)
+  2) GraphQL APIs (flexible query services)
+  3) Microservices (distributed service architectures)
+  4) Serverless Functions (Lambda, Vercel Functions)
+  5) WebSocket Services (real-time communication)
+  6) gRPC Services (high-performance RPC)
+  7) Other
+EOF
             read -p "Choice (1-7): " choice >&2
             case "$choice" in
                 1) subtype="REST APIs" ;;
@@ -346,12 +354,15 @@ get_app_subtype() {
             esac
             ;;
         "Game Development")
-            echo -e "\n${BOLD}Select Game Development Subtype:${NC}" >&2
-            echo "  1) Browser Games (JavaScript/WebGL games)" >&2
-            echo "  2) Mobile Games (iOS/Android native or Unity)" >&2
-            echo "  3) PC Games (Steam, Epic Games)" >&2
-            echo "  4) Console Games (PlayStation, Xbox, Nintendo)" >&2
-            echo "  5) Other" >&2
+            cat >&2 <<EOF
+
+${BOLD}Select Game Development Subtype:${NC}
+  1) Browser Games (JavaScript/WebGL games)
+  2) Mobile Games (iOS/Android native or Unity)
+  3) PC Games (Steam, Epic Games)
+  4) Console Games (PlayStation, Xbox, Nintendo)
+  5) Other
+EOF
             read -p "Choice (1-5): " choice >&2
             case "$choice" in
                 1) subtype="Browser Games" ;;
@@ -366,12 +377,15 @@ get_app_subtype() {
             esac
             ;;
         "Embedded/IoT Applications")
-            echo -e "\n${BOLD}Select Embedded/IoT Application Subtype:${NC}" >&2
-            echo "  1) Firmware (microcontroller programming)" >&2
-            echo "  2) IoT Devices (smart home, industrial sensors)" >&2
-            echo "  3) Automotive (car infotainment systems)" >&2
-            echo "  4) Wearables (smartwatch apps)" >&2
-            echo "  5) Other" >&2
+            cat >&2 <<EOF
+
+${BOLD}Select Embedded/IoT Application Subtype:${NC}
+  1) Firmware (microcontroller programming)
+  2) IoT Devices (smart home, industrial sensors)
+  3) Automotive (car infotainment systems)
+  4) Wearables (smartwatch apps)
+  5) Other
+EOF
             read -p "Choice (1-5): " choice >&2
             case "$choice" in
                 1) subtype="Firmware" ;;
@@ -386,11 +400,14 @@ get_app_subtype() {
             esac
             ;;
         "Browser Extensions")
-            echo -e "\n${BOLD}Select Browser Extension Subtype:${NC}" >&2
-            echo "  1) Chrome Extensions (ad blockers, productivity tools)" >&2
-            echo "  2) Firefox Add-ons (privacy tools, themes)" >&2
-            echo "  3) Safari Extensions (password managers)" >&2
-            echo "  4) Other" >&2
+            cat >&2 <<EOF
+
+${BOLD}Select Browser Extension Subtype:${NC}
+  1) Chrome Extensions (ad blockers, productivity tools)
+  2) Firefox Add-ons (privacy tools, themes)
+  3) Safari Extensions (password managers)
+  4) Other
+EOF
             read -p "Choice (1-4): " choice >&2
             case "$choice" in
                 1) subtype="Chrome Extensions" ;;
@@ -404,12 +421,15 @@ get_app_subtype() {
             esac
             ;;
         "AI/ML Applications")
-            echo -e "\n${BOLD}Select AI/ML Application Subtype:${NC}" >&2
-            echo "  1) Chatbots (customer service, virtual assistants)" >&2
-            echo "  2) Computer Vision (image recognition, filters)" >&2
-            echo "  3) NLP Tools (translation, sentiment analysis)" >&2
-            echo "  4) Recommendation Systems (Netflix, Amazon suggestions)" >&2
-            echo "  5) Other" >&2
+            cat >&2 <<EOF
+
+${BOLD}Select AI/ML Application Subtype:${NC}
+  1) Chatbots (customer service, virtual assistants)
+  2) Computer Vision (image recognition, filters)
+  3) NLP Tools (translation, sentiment analysis)
+  4) Recommendation Systems (Netflix, Amazon suggestions)
+  5) Other
+EOF
             read -p "Choice (1-5): " choice >&2
             case "$choice" in
                 1) subtype="Chatbots" ;;
@@ -424,13 +444,16 @@ get_app_subtype() {
             esac
             ;;
         "Specialized Applications")
-            echo -e "\n${BOLD}Select Specialized Application Subtype:${NC}" >&2
-            echo "  1) AR/VR Apps (Meta Quest, Apple Vision Pro)" >&2
-            echo "  2) Blockchain/Web3 (DApps, smart contracts)" >&2
-            echo "  3) Data Visualization (Tableau, D3.js apps)" >&2
-            echo "  4) Scientific Computing (MATLAB, Jupyter notebooks)" >&2
-            echo "  5) CAD/3D Software (AutoCAD, Blender plugins)" >&2
-            echo "  6) Other" >&2
+            cat >&2 <<EOF
+
+${BOLD}Select Specialized Application Subtype:${NC}
+  1) AR/VR Apps (Meta Quest, Apple Vision Pro)
+  2) Blockchain/Web3 (DApps, smart contracts)
+  3) Data Visualization (Tableau, D3.js apps)
+  4) Scientific Computing (MATLAB, Jupyter notebooks)
+  5) CAD/3D Software (AutoCAD, Blender plugins)
+  6) Other
+EOF
             read -p "Choice (1-6): " choice >&2
             case "$choice" in
                 1) subtype="AR/VR Apps" ;;
@@ -507,9 +530,7 @@ create_claude_md() {
     local app_type=$3
     local app_subtype=$4
     
-    if [[ "$ENABLE_CLAUDE_MD" != "true" ]]; then
-        return
-    fi
+    [[ "$ENABLE_CLAUDE_MD" != "true" ]] && return
     
     cat > "$repo_dir/CLAUDE.md" << EOF
 # CLAUDE.md
@@ -669,17 +690,31 @@ setup_and_push_remotes() {
     
     step "Setting up remotes"
     
+    # Setup remotes in parallel if both are configured
+    local pids=()
+    
     if [[ -n "$GIT_PRIMARY_PREFIX" ]]; then
         local primary_url="${GIT_PRIMARY_PREFIX}${GIT_PRIMARY_USER}/${repo_name}.git"
-        setup_remote "origin" "$primary_url"
+        {
+            setup_remote "origin" "$primary_url"
+        } &
+        pids+=($!)
         info "Primary remote: $primary_url"
     fi
     
     if [[ -n "$GIT_SECONDARY_PREFIX" ]]; then
         local secondary_url="${GIT_SECONDARY_PREFIX}${GIT_SECONDARY_USER}/${repo_name}.git"
-        setup_remote "secondary" "$secondary_url"
+        {
+            setup_remote "secondary" "$secondary_url"
+        } &
+        pids+=($!)
         info "Secondary remote: $secondary_url"
     fi
+    
+    # Wait for remote setup to complete
+    for pid in "${pids[@]}"; do
+        wait "$pid"
+    done
     
     # Try to push
     if [[ -n "$GIT_PRIMARY_PREFIX" ]]; then
@@ -775,9 +810,7 @@ copy_repo_snippets() {
     local repo_dir=$1
     local repo_name=$2
     
-    if [[ "$ENABLE_REPO_SNIPPETS" != "true" ]]; then
-        return
-    fi
+    [[ "$ENABLE_REPO_SNIPPETS" != "true" ]] && return
     
     local snippets_dir=""
     
@@ -789,7 +822,7 @@ copy_repo_snippets() {
         # Clone to temp directory if remote is configured
         snippets_dir="/tmp/repo-snippets-$$"
         info "Cloning repo-snippets from remote..."
-        if git clone --quiet --depth 1 "$REPO_SNIPPETS_REMOTE" "$snippets_dir" 2>/dev/null; then
+        if git clone --quiet --depth 1 --single-branch "$REPO_SNIPPETS_REMOTE" "$snippets_dir" 2>/dev/null; then
             info "Successfully cloned repo-snippets"
         else
             warning "Failed to clone repo-snippets from $REPO_SNIPPETS_REMOTE"
@@ -803,32 +836,36 @@ copy_repo_snippets() {
     # Copy template files
     step "Copying template files from repo-snippets"
     
+    # Use performance utils for optimized copy
+    load_perf_utils
+    
+    # Batch copy operations
+    local files_copied=false
+    
     # Copy ai-chats directory structure
     if [[ -d "$snippets_dir/ai-chats" ]]; then
-        cp -r "$snippets_dir/ai-chats" "$repo_dir/"
+        optimized_copy "$snippets_dir/ai-chats" "$repo_dir" && files_copied=true
         # Clear out example session files but keep the structure
         find "$repo_dir/ai-chats" -name "2025-*.md" -delete 2>/dev/null || true
-        info "Copied ai-chats documentation structure"
     fi
     
     # Copy dev-knowledge directory
-    if [[ -d "$snippets_dir/dev-knowledge" ]]; then
-        cp -r "$snippets_dir/dev-knowledge" "$repo_dir/"
-        info "Copied dev-knowledge directory"
-    fi
+    [[ -d "$snippets_dir/dev-knowledge" ]] && optimized_copy "$snippets_dir/dev-knowledge" "$repo_dir" && files_copied=true
     
     # Copy enhanced scripts (overwriting the basic ones)
     if [[ -f "$snippets_dir/scripts/sync.sh" ]]; then
         cp "$snippets_dir/scripts/sync.sh" "$repo_dir/scripts/sync.sh"
         chmod +x "$repo_dir/scripts/sync.sh"
-        info "Copied enhanced sync.sh script"
+        files_copied=true
     fi
     
     if [[ -f "$snippets_dir/scripts/pushall.sh" ]]; then
         cp "$snippets_dir/scripts/pushall.sh" "$repo_dir/scripts/"
         chmod +x "$repo_dir/scripts/pushall.sh"
-        info "Copied pushall.sh script"
+        files_copied=true
     fi
+    
+    [[ "$files_copied" == "true" ]] && info "Template files copied from repo-snippets"
     
     # Copy CLAUDE.md if it exists (will be merged with generated one)
     if [[ -f "$snippets_dir/CLAUDE.md" ]] && [[ -f "$repo_dir/CLAUDE.md" ]]; then
@@ -909,8 +946,9 @@ merge_tasks_json() {
     local user_tasks_file="$1"
     local repo_tasks_file="$2"
     
-    # Check if jq is available for JSON manipulation
-    if ! command -v jq >/dev/null 2>&1; then
+    # Check if jq is available for JSON manipulation (use cached check)
+    load_perf_utils
+    if ! cached_command_exists jq; then
         warning "jq not available, skipping tasks.json merge"
         return
     fi
@@ -939,19 +977,21 @@ merge_tasks_json() {
 
 # Select application type interactively
 select_application_type() {
-    echo
-    echo -e "${BOLD}Select Application Type:${NC}"
-    echo "  1) Web Applications"
-    echo "  2) Mobile Applications"
-    echo "  3) Desktop Applications"
-    echo "  4) Command Line Applications"
-    echo "  5) API/Backend Services"
-    echo "  6) Game Development"
-    echo "  7) Embedded/IoT Applications"
-    echo "  8) Browser Extensions"
-    echo "  9) AI/ML Applications"
-    echo " 10) Specialized Applications"
-    echo " 11) Other"
+    cat <<EOF
+
+${BOLD}Select Application Type:${NC}
+  1) Web Applications
+  2) Mobile Applications
+  3) Desktop Applications
+  4) Command Line Applications
+  5) API/Backend Services
+  6) Game Development
+  7) Embedded/IoT Applications
+  8) Browser Extensions
+  9) AI/ML Applications
+ 10) Specialized Applications
+ 11) Other
+EOF
     read -p "Choice (1-11): " app_choice
     
     case "$app_choice" in
@@ -1095,8 +1135,9 @@ cmd_new() {
     # Copy user configuration files
     copy_user_configs "$repo_dir"
     
-    # Initial commit
-    git add .
+    # Initial commit - batch add all files at once
+    load_perf_utils
+    git add . 2>/dev/null
     git commit -m "Initial commit"
     
     # Setup remotes and push
@@ -1108,6 +1149,165 @@ cmd_new() {
     echo "  cd $repo_dir"
     echo "  # Start coding!"
     echo "  ./scripts/sync.sh  # or Ctrl+Shift+B in VS Code"
+    
+    # Launch editor if available
+    launch_editor "$repo_dir"
+}
+
+# Clone a repository (without fork setup)
+cmd_clone() {
+    load_colors
+    load_git_utils
+    
+    local repo_url="$REPO_URL"
+    local parent_dir=""
+    
+    # Interactive mode if URL not provided
+    if [[ -z "$repo_url" ]]; then
+        # In dry-run mode, we need a URL
+        if [[ "$DRY_RUN" == "true" ]]; then
+            error "Clone command requires --url parameter"
+            exit 1
+        fi
+        echo -e "${BOLD}Clone Repository${NC}\n"
+        read -p "Repository URL: " repo_url
+    fi
+    
+    # Extract repo info
+    local repo_info=$(extract_repo_info "$repo_url")
+    local author=$(echo "$repo_info" | cut -d'|' -f1)
+    local repo=$(echo "$repo_info" | cut -d'|' -f2)
+    
+    if [[ -z "$author" ]] || [[ -z "$repo" ]]; then
+        error "Could not parse repository URL"
+        exit 1
+    fi
+    
+    # If dry-run, just validate and exit
+    if [[ "$DRY_RUN" == "true" ]]; then
+        success "Validation passed for clone URL: $repo_url"
+        exit 0
+    fi
+    
+    # Use provided name or use original
+    local repo_name="${REPO_NAME:-$repo}"
+    
+    # Ask for parent directory (only in interactive mode)
+    if [[ "$DRY_RUN" != "true" ]]; then
+        echo
+        echo -e "${BOLD}Where should this repository be cloned?${NC}"
+        echo -e "Default parent directory: ${CYAN}$WORK_DIR${NC}"
+        read -p "Parent directory (press Enter to use default): " custom_parent
+        parent_dir="${custom_parent:-$WORK_DIR}"
+        
+        # Expand tilde if present
+        parent_dir="${parent_dir/#\~/$HOME}"
+        
+        # Create parent directory if it doesn't exist
+        if [[ ! -d "$parent_dir" ]]; then
+            echo -e "${YELLOW}Directory $parent_dir doesn't exist.${NC}"
+            read -p "Create it? (y/n) [y]: " create_dir
+            if [[ "${create_dir:-y}" =~ ^[Yy]$ ]]; then
+                mkdir -p "$parent_dir"
+                success "Created parent directory: $parent_dir"
+            else
+                error "Cannot proceed without parent directory"
+                exit 1
+            fi
+        fi
+    else
+        parent_dir="$WORK_DIR"
+    fi
+    
+    local repo_dir="$parent_dir/$repo_name"
+    
+    # Check if already exists
+    if [[ -d "$repo_dir" ]]; then
+        error "Directory $repo_dir already exists!"
+        exit 1
+    fi
+    
+    # Clone repository
+    step "Cloning $repo_url"
+    git clone "$repo_url" "$repo_dir"
+    cd "$repo_dir"
+    
+    # Create VS Code integration
+    create_vscode_integration "$repo_dir"
+    
+    # Create claude.md (basic for clone)
+    if [[ "$ENABLE_CLAUDE_MD" == "true" ]]; then
+        cat > "$repo_dir/CLAUDE.md" << EOF
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project: $repo_name
+
+Cloned from: $repo_url
+
+### Development Workflow
+1. Make changes
+2. Run tests
+3. Commit and push changes
+
+### AI Assistant Guidelines
+- Read relevant files before making changes
+- Follow existing code patterns
+- Consider impact on other components
+- Suggest tests for new features
+EOF
+    fi
+    
+    # Create simple sync script for cloned repos
+    mkdir -p "$repo_dir/scripts"
+    cat > "$repo_dir/scripts/sync.sh" << 'EOF'
+#!/bin/bash
+# Git sync script for cloned repository - generated by git-go
+
+set -e
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+echo -e "${BLUE}=== Git Sync ===${NC}"
+echo -e "Repository: $(basename $(git rev-parse --show-toplevel))"
+echo -e "Branch: $(git branch --show-current)"
+
+# Pull latest changes
+echo -e "\n${YELLOW}Pulling latest changes...${NC}"
+if git pull; then
+    echo -e "${GREEN}✓ Pull successful${NC}"
+else
+    echo -e "${RED}✗ Pull failed${NC}"
+    exit 1
+fi
+
+# Push any local commits
+echo -e "\n${YELLOW}Pushing local changes...${NC}"
+if git push; then
+    echo -e "${GREEN}✓ Push successful${NC}"
+else
+    echo -e "${YELLOW}No changes to push or push failed${NC}"
+fi
+
+echo -e "\n${GREEN}✅ Sync complete!${NC}"
+EOF
+    chmod +x "$repo_dir/scripts/sync.sh"
+    
+    # Copy user configuration files
+    copy_user_configs "$repo_dir"
+    
+    success "Repository cloned successfully!"
+    echo
+    highlight "Next steps:"
+    echo "  cd $repo_dir"
+    echo "  # Start working with the code"
+    echo "  ./scripts/sync.sh  # Sync with remote"
     
     # Launch editor if available
     launch_editor "$repo_dir"
@@ -1475,18 +1675,22 @@ EOF
 
 # Show interactive menu
 show_menu() {
-    echo -e "${BOLD}Git-Go v${VERSION}${NC} - Intelligent Git Repository Manager\n"
-    echo "What would you like to do?"
-    echo
-    echo -e "  ${BOLD}1)${NC} Create a new repository"
-    echo -e "  ${BOLD}2)${NC} Fork an existing repository"
-    echo -e "  ${BOLD}3)${NC} Edit configuration"
-    echo -e "  ${BOLD}4)${NC} Run setup wizard"
-    echo -e "  ${BOLD}5)${NC} Show version"
-    echo -e "  ${BOLD}6)${NC} Show help"
-    echo -e "  ${BOLD}7)${NC} Exit"
-    echo
-    read -p "Enter your choice (1-7): " choice
+    cat <<EOF
+${BOLD}Git-Go v${VERSION}${NC} - Intelligent Git Repository Manager
+
+What would you like to do?
+
+  ${BOLD}1)${NC} Create a new repository
+  ${BOLD}2)${NC} Fork an existing repository
+  ${BOLD}3)${NC} Clone an existing repository
+  ${BOLD}4)${NC} Edit configuration
+  ${BOLD}5)${NC} Run setup wizard
+  ${BOLD}6)${NC} Show version
+  ${BOLD}7)${NC} Show help
+  ${BOLD}8)${NC} Exit
+
+EOF
+    read -p "Enter your choice (1-8): " choice
     
     case $choice in
         1)
@@ -1496,10 +1700,10 @@ show_menu() {
             COMMAND="fork"
             ;;
         3)
-            COMMAND="config"
+            COMMAND="clone"
             ;;
         4)
-            COMMAND="status"
+            COMMAND="config"
             ;;
         5)
             COMMAND="setup"
@@ -1555,6 +1759,9 @@ main() {
             ;;
         fork)
             cmd_fork
+            ;;
+        clone)
+            cmd_clone
             ;;
         config)
             cmd_config

@@ -4,6 +4,9 @@
 # Cache for command existence checks
 declare -A COMMAND_CACHE
 
+# Cache for git remote info
+declare -A REMOTE_CACHE
+
 # Check if command exists with caching
 cached_command_exists() {
     local cmd=$1
@@ -90,4 +93,46 @@ has_uncommitted_changes() {
 # Get git info in single command
 get_git_info() {
     git rev-parse --abbrev-ref HEAD --show-toplevel --git-dir 2>/dev/null
+}
+
+# Cached git remote check
+cached_remote_exists() {
+    local remote=$1
+    local cache_key="remote_$remote"
+    
+    # Check cache first
+    if [[ -n "${REMOTE_CACHE[$cache_key]}" ]]; then
+        return "${REMOTE_CACHE[$cache_key]}"
+    fi
+    
+    # Check remote and cache result
+    if git remote | grep -q "^$remote$"; then
+        REMOTE_CACHE[$cache_key]=0
+        return 0
+    else
+        REMOTE_CACHE[$cache_key]=1
+        return 1
+    fi
+}
+
+# Batch git operations
+batch_git_add() {
+    local files=("$@")
+    if [[ ${#files[@]} -gt 0 ]]; then
+        git add "${files[@]}"
+    fi
+}
+
+# Optimized file copy with progress for large operations
+optimized_copy() {
+    local src=$1
+    local dst=$2
+    local file_count=$(find "$src" -type f 2>/dev/null | wc -l)
+    
+    if [[ $file_count -gt 100 ]]; then
+        # Use tar for large file counts (faster than cp -r)
+        tar -cf - -C "$(dirname "$src")" "$(basename "$src")" | tar -xf - -C "$dst"
+    else
+        cp -r "$src" "$dst"
+    fi
 }

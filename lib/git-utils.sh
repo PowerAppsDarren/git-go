@@ -44,10 +44,8 @@ get_default_branch() {
     git symbolic-ref "refs/remotes/$remote/HEAD" 2>/dev/null | sed "s@^refs/remotes/$remote/@@"
 }
 
-# Check if command exists
-command_exists() {
-    command -v "$1" &>/dev/null
-}
+# Note: Use cached_command_exists() from performance-utils.sh instead
+# for better performance with command existence checks
 
 # Validate repository name
 validate_repo_name() {

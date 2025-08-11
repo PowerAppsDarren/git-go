@@ -22,6 +22,7 @@ Create and manage git repositories with smart sync scripts, VS Code integration,
 - 🎨 **VS Code Integration** - Built-in tasks for one-key synchronization (Ctrl+Shift+B)
 - ⚙️ **Highly Configurable** - Customize git hosts, templates, and behaviors
 - 🎭 **Fork-Aware** - Special handling for forked repositories with upstream tracking
+- 🔍 **Security Scanning** - Built-in tools to find and purge sensitive data
 - 🌈 **Beautiful CLI** - Colorful, informative output with progress indicators
 
 ## 📦 Installation
@@ -162,6 +163,54 @@ my-project/
 | `setup` | Run setup wizard | `git-go setup` |
 | `version` | Show version | `git-go version` |
 | `help` | Show help | `git-go help` |
+
+## 🔒 Security Tools
+
+Git-Go includes security tools to help you prepare repositories for public release:
+
+### Sensitive Data Scanner
+
+The `/my-sanitize` command scans all your repositories for sensitive information:
+
+```bash
+/my-sanitize  # Scans ~/src, ~/_git, ~/git directories
+```
+
+This creates reports in `~/.src/[repo-name]/sensitive-info.md` showing:
+- Personal usernames and emails
+- Private git server URLs
+- API keys and tokens
+- Hardcoded paths
+- Files that should be removed
+
+### Git History Purge Tool
+
+The `git-purge-sensitive` command removes sensitive files from git history:
+
+```bash
+cd your-repo
+git-purge-sensitive
+```
+
+Features:
+- **Automatic Backups**: Before purging, all sensitive files are backed up to `~/.src/[repo-name]/purged-files-[timestamp]/`
+- **Multiple Methods**: Choose between git filter-branch, BFG Repo-Cleaner, or manual clean clone
+- **Common Patterns**: Pre-configured to remove config files, .env files, personal scripts
+- **History Rewrite**: Completely removes files from all commits in git history
+
+⚠️ **Warning**: This rewrites git history. Always backup first and coordinate with collaborators before force-pushing.
+
+### Backup Locations
+
+All sensitive file backups are stored in:
+```
+~/.src/
+├── [repo-name]/
+│   ├── sensitive-info.md           # Scan report
+│   └── purged-files-[timestamp]/   # Backed up files
+│       ├── README.md                # Restoration instructions
+│       └── [original file structure]
+```
 
 ## 🤝 Contributing
 

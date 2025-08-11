@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "*",
-      "Bash(~/.claude/commands/my-sanitize:*)"
+      "Bash(~/.claude/commands/my-sanitize:*)",
+      "Bash(pip3 install:*)",
+      "Bash(git-purge:*)"
     ]
   },
   "defaultMode": "acceptEdits"
