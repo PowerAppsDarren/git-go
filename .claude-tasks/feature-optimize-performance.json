@@ -1,0 +1,30 @@
+{
+  "tasks": [
+    {
+      "id": "1",
+      "title": "Implement multi-session Claude workflow",
+      "status": "done",
+      "subtasks": [
+        {
+          "id": "2",
+          "title": "Create session management system",
+          "status": "done",
+          "subtasks": []
+        },
+        {
+          "id": "3",
+          "title": "Build task tracking with hierarchy",
+          "status": "done",
+          "subtasks": []
+        },
+        {
+          "id": "4",
+          "title": "Enhance wrap-up with auto-sync",
+          "status": "done",
+          "subtasks": []
+        }
+      ]
+    }
+  ],
+  "next_id": 5
+}
