@@ -4,7 +4,10 @@
       "*",
       "Bash(~/.claude/commands/my-sanitize:*)",
       "Bash(pip3 install:*)",
-      "Bash(git-purge:*)"
+      "Bash(git-purge:*)",
+      "Bash(git rev-parse:*)",
+      "Bash(ls:*)",
+      "Bash(git init:*)"
     ]
   },
   "defaultMode": "acceptEdits"

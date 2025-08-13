@@ -3,6 +3,20 @@
 ## Project Overview
 Git-Go is a professional Git repository initialization and management tool that automates repository creation with intelligent sync scripts, VS Code integration, and AI-assisted development support.
 
+## 🚨 PRIORITY: Hybrid Architecture Support (v2.0.0)
+
+### Hybrid Electron/Web Architecture (NEW GLOBAL STANDARD)
+- [ ] **Auto-detect web projects and add hybrid support**
+- [ ] **Copy Electron structure from ~/src/model-hybrid**
+- [ ] **Add hybrid npm scripts to package.json**
+- [ ] **Update CLAUDE.md template with hybrid instructions**
+- [ ] **Add --hybrid flag (default on) and --no-hybrid flag**
+- [ ] **Create hybrid launcher scripts**
+- [ ] **Support desktop app packaging configuration**
+- [ ] **Add system tray and global hotkey templates**
+
+*See: `ai-knowledge/HYBRID-ARCHITECTURE-STANDARD.md` for implementation details*
+
 ## Completed Features ✅
 
 ### Core Functionality

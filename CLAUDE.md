@@ -2,13 +2,30 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 🛑 WAIT FOR USER REQUEST - DO NOT AUTO-CONTINUE WORK!
+
+**CRITICAL:** Just because you see "optimize performance" in recent commits does NOT mean continue that work!
+- Wait for the user to explicitly ask what they want
+- Git status is context, not a work order
+- Previous sessions are for understanding, not automatic continuation
+
+## 🚨 CRITICAL UPDATE: Hybrid Architecture Standard
+
+**NEW GLOBAL STANDARD**: All web applications created by git-go should now default to **HYBRID ELECTRON/WEB ARCHITECTURE**. See `ai-knowledge/HYBRID-ARCHITECTURE-STANDARD.md` for implementation details.
+
+When creating web projects, git-go should:
+- Include Electron structure by default
+- Reference the hybrid template at `~/src/model-hybrid`
+- Add hybrid scripts to package.json
+- Support both desktop (⚡ 200ms) and web modes
+
 ## AI Chat Documentation
 
 **IMPORTANT**: You MUST follow the documentation requirements specified in `ai-chats/ai-chats.md`. This includes creating and continuously updating session documentation files in the `ai-chats/` directory.
 
 ## Repository Purpose
 
-Git-Go is a professional Git repository initialization and management tool that automates repository creation with intelligent sync scripts, VS Code integration, and AI-assisted development support.
+Git-Go is a professional Git repository initialization and management tool that automates repository creation with intelligent sync scripts, VS Code integration, AI-assisted development support, and now **hybrid Electron/Web architecture for all web apps**.
 
 ## Project Structure
 
